@@ -1,7 +1,17 @@
 {
 	"name": "placeholder-images",
 	"version": "0.1.0",
-	"description": "Blazing fast components for modern web applications",
+	"description": "Deterministic generative placeholder images — SVG, PNG, and an HTTP endpoint, from a seed string",
+	"keywords": [
+		"avatar",
+		"cover-art",
+		"deterministic",
+		"generative",
+		"identicon",
+		"placeholder",
+		"png",
+		"svg"
+	],
 	"homepage": "https://github.com/TimMikeladze/placeholder-images#readme",
 	"bugs": {
 		"url": "https://github.com/TimMikeladze/placeholder-images/issues"
@@ -10,6 +20,9 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/TimMikeladze/placeholder-images.git"
+	},
+	"bin": {
+		"placeholder-images": "./dist/cli.js"
 	},
 	"files": [
 		"dist"
@@ -24,6 +37,12 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./server": {
+			"import": {
+				"types": "./dist/server.d.ts",
+				"default": "./dist/server.js"
+			}
+		},
 		"./package.json": "./package.json"
 	},
 	"scripts": {
@@ -32,6 +51,7 @@
 		"format": "oxfmt",
 		"lint": "oxlint",
 		"prepare": "bun simple-git-hooks",
+		"serve": "bun run src/cli.ts",
 		"release": "bumpp --commit --push --tag",
 		"test": "bun test",
 		"test:coverage": "bun test --coverage",
@@ -39,6 +59,7 @@
 		"type-check": "tsc --noEmit"
 	},
 	"devDependencies": {
+		"@resvg/resvg-js": "^2.6.2",
 		"@types/bun": "^1.3.14",
 		"bumpp": "^12.2.0",
 		"bunup": "^0.16.32",
@@ -48,9 +69,13 @@
 		"typescript": "^7.0.2"
 	},
 	"peerDependencies": {
+		"@resvg/resvg-js": ">=2.0.0",
 		"typescript": ">=4.5.0"
 	},
 	"peerDependenciesMeta": {
+		"@resvg/resvg-js": {
+			"optional": true
+		},
 		"typescript": {
 			"optional": true
 		}

@@ -1,6 +1,8 @@
 {
 	"compilerOptions": {
 		"target": "ES2023",
+		"types": ["bun"],
+		"lib": ["ES2023", "DOM"],
 		"module": "Preserve",
 		"moduleDetection": "force",
 
