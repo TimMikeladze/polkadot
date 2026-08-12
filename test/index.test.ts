@@ -2,12 +2,15 @@ import { describe, expect, test } from 'bun:test';
 import {
 	createHandler,
 	design,
+	FONT_NAMES,
 	hashSeed,
 	MOTIFS,
 	PALETTES,
 	parseImageRequest,
+	playgroundHtml,
 	renderDataUri,
 	renderSvg,
+	VARIANTS,
 	wrapText,
 } from '../src';
 import { serve } from '../src/server.ts';
@@ -35,6 +38,17 @@ describe('design', () => {
 
 	test('rotate: false removes the tilt', () => {
 		expect(design('abc', { rotate: false }).rotation).toBe(0);
+	});
+
+	test('an explicit rotation wins over the seed and over rotate', () => {
+		expect(design('abc', { rotation: 12 }).rotation).toBe(12);
+		expect(design('abc', { rotation: 12, rotate: false }).rotation).toBe(12);
+	});
+
+	test('a forced variant wraps instead of clamping', () => {
+		expect(design('abc', { variant: 2 }).variant).toBe(2);
+		expect(design('abc', { variant: VARIANTS + 1 }).variant).toBe(1);
+		expect(design('abc', { variant: -1 }).variant).toBe(VARIANTS - 1);
 	});
 
 	test('custom palettes replace the built-ins', () => {
@@ -103,6 +117,102 @@ describe('renderSvg', () => {
 		expect(svg).not.toContain('<script');
 		expect(svg).not.toContain('onload="');
 		expect(svg).toContain('fill="/scriptalert(1)/script"');
+	});
+
+	test('align moves the type block and its anchor', () => {
+		expect(renderSvg({ seed: 'x', title: 'Hi' })).toContain('text-anchor="start"');
+		const centered = renderSvg({ seed: 'x', title: 'Hi', width: 600, align: 'center' });
+		expect(centered).toContain('text-anchor="middle"');
+		expect(centered).toContain('x="300"');
+	});
+
+	test('a named font pair replaces both stacks', () => {
+		const svg = renderSvg({ seed: 'x', title: 'Hi', subtitle: 'Yo', font: 'mono' });
+		expect(svg).toContain('ui-monospace');
+		expect(svg).not.toContain('Georgia');
+		// An unknown name is a fallback, not a crash.
+		expect(renderSvg({ seed: 'x', title: 'Hi', font: 'nope' })).toContain('Georgia');
+	});
+
+	test('valign moves the block, and bottom is the default', () => {
+		const yOf = (source: string) => Number(/<text[^>]*y="([\d.]+)"/.exec(source)?.[1]);
+		const options = { seed: 'x', title: 'Hi', width: 600, height: 600 } as const;
+		expect(renderSvg({ ...options, valign: 'bottom' })).toBe(renderSvg(options));
+		expect(yOf(renderSvg({ ...options, valign: 'top' }))).toBeLessThan(
+			yOf(renderSvg({ ...options, valign: 'middle' })),
+		);
+		expect(yOf(renderSvg({ ...options, valign: 'middle' }))).toBeLessThan(
+			yOf(renderSvg({ ...options, valign: 'bottom' })),
+		);
+	});
+
+	test('textX and textY place the block by fraction and clamp', () => {
+		const svg = renderSvg({
+			seed: 'x',
+			title: 'Hi',
+			width: 600,
+			height: 400,
+			textX: 0.5,
+			textY: 0.25,
+		});
+		expect(svg).toContain('x="300"');
+		expect(svg).toContain('y="100"');
+		// Out of range is a clamp, not a title drawn off the canvas.
+		expect(renderSvg({ seed: 'x', title: 'Hi', width: 600, textX: 4 })).toContain('x="600"');
+		expect(renderSvg({ seed: 'x', title: 'Hi', width: 600, textX: -4 })).toContain('x="0"');
+	});
+
+	test('textRotation turns the block around its own anchor', () => {
+		// The art always carries its own tilt group, so the type's group is the
+		// second one, and its absence is what an unrotated title looks like.
+		const groups = (source: string) => source.match(/<g transform="rotate/g)?.length ?? 0;
+		expect(groups(renderSvg({ seed: 'x', title: 'Hi' }))).toBe(1);
+		const svg = renderSvg({
+			seed: 'x',
+			title: 'Hi',
+			width: 600,
+			height: 600,
+			textX: 0.5,
+			textY: 0.5,
+			textRotation: -12,
+		});
+		expect(svg).toContain('<g transform="rotate(-12 300 300)">');
+		// One group around the whole block, not one per line.
+		expect(groups(svg)).toBe(2);
+	});
+
+	test('type colours override the palette, per line', () => {
+		const svg = renderSvg({
+			seed: 'x',
+			title: 'Hi',
+			subtitle: 'Yo',
+			titleColor: '#ffd166',
+			subtitleColor: 'rebeccapurple',
+		});
+		expect(svg).toContain('fill="#ffd166"');
+		expect(svg).toContain('fill="rebeccapurple"');
+	});
+
+	test('a type colour cannot break out of its attribute', () => {
+		const svg = renderSvg({ seed: 'x', title: 'Hi', titleColor: '"><script>alert(1)</script>' });
+		expect(svg).not.toContain('<script');
+		// Quotes and brackets are stripped, so the value stays inside `fill`.
+		expect(svg).toContain('fill="scriptalert(1)/script"');
+	});
+
+	test('the scrim is opt-in and keyed per design', () => {
+		expect(renderSvg({ seed: 'x', title: 'Hi' })).not.toContain('linearGradient');
+		const svg = renderSvg({ seed: 'x', title: 'Hi', scrim: 0.5 });
+		expect(svg).toContain('linearGradient');
+		expect(svg).toContain('stop-opacity="0.5"');
+		// Two designs on one page must not share a gradient id.
+		const other = renderSvg({ seed: 'y', title: 'Hi', scrim: 0.5 });
+		const idOf = (source: string) => /linearGradient id="([^"]+)"/.exec(source)?.[1];
+		expect(idOf(svg)).not.toBe(idOf(other));
+	});
+
+	test('a scrim without type draws nothing', () => {
+		expect(renderSvg({ seed: 'x', scrim: true })).not.toContain('linearGradient');
 	});
 
 	test('an empty seed still gets a described label', () => {
@@ -188,6 +298,70 @@ describe('parseImageRequest', () => {
 		expect(parseImageRequest(new URL('http://x/%E0%A4%A.svg'))).toBeNull();
 	});
 
+	test('reads the design knobs', () => {
+		const parsed = parseImageRequest(
+			new URL('http://x/a.svg?variant=2&font=mono&align=center&scrim=0.4'),
+		);
+		expect(parsed?.options.variant).toBe(2);
+		expect(parsed?.options.font).toBe('mono');
+		expect(parsed?.options.align).toBe('center');
+		expect(parsed?.options.scrim).toBe(0.4);
+	});
+
+	test('ignores unknown fonts and alignments', () => {
+		const parsed = parseImageRequest(new URL('http://x/a.svg?font=comic&align=sideways'));
+		expect(parsed?.options.font).toBeUndefined();
+		expect(parsed?.options.align).toBeUndefined();
+	});
+
+	test('reads text placement, rotation, and colours', () => {
+		const parsed = parseImageRequest(
+			new URL('http://x/a.svg?valign=middle&tx=0.5&ty=0.25&textRotate=-8&color=ff3300'),
+		);
+		expect(parsed?.options.valign).toBe('middle');
+		expect(parsed?.options.textX).toBe(0.5);
+		expect(parsed?.options.textY).toBe(0.25);
+		expect(parsed?.options.textRotation).toBe(-8);
+		// A bare hex is the useful form in a URL, where '#' ends the query.
+		expect(parsed?.options.titleColor).toBe('#ff3300');
+		expect(parsed?.options.subtitleColor).toBe('#ff3300');
+	});
+
+	test('a per-line colour beats the shared one', () => {
+		const parsed = parseImageRequest(new URL('http://x/a.svg?titleColor=%23fff&color=000'));
+		expect(parsed?.options.titleColor).toBe('#fff');
+		expect(parsed?.options.subtitleColor).toBe('#000');
+	});
+
+	test('rejects colours that are neither hex nor a keyword', () => {
+		const parsed = parseImageRequest(new URL('http://x/a.svg?color=url(javascript:alert(1))'));
+		expect(parsed?.options.titleColor).toBeUndefined();
+	});
+
+	test('text rotation is clamped to half a turn', () => {
+		expect(parseImageRequest(new URL('http://x/a.svg?textRotate=900'))?.options.textRotation).toBe(
+			180,
+		);
+	});
+
+	test('scrim reads as a switch or a strength', () => {
+		const on = (query: string) =>
+			parseImageRequest(new URL('http://x/a.svg' + query))?.options.scrim;
+		expect(on('?scrim')).toBe(true);
+		expect(on('?scrim=true')).toBe(true);
+		expect(on('?scrim=0.6')).toBe(0.6);
+		expect(on('?scrim=false')).toBeUndefined();
+		expect(on('?scrim=0')).toBeUndefined();
+		expect(on('')).toBeUndefined();
+	});
+
+	test('rotate is a switch or an angle, and the angle is clamped', () => {
+		expect(parseImageRequest(new URL('http://x/a.svg?rotate=false'))?.options.rotate).toBe(false);
+		expect(parseImageRequest(new URL('http://x/a.svg?rotate=12'))?.options.rotation).toBe(12);
+		expect(parseImageRequest(new URL('http://x/a.svg?rotate=900'))?.options.rotation).toBe(45);
+		expect(parseImageRequest(new URL('http://x/a.svg'))?.options.rotation).toBeUndefined();
+	});
+
 	test('scale cannot push the raster past maxSize', () => {
 		const parsed = parseImageRequest(new URL('http://x/a.png?w=1024&scale=4'), { maxSize: 2048 });
 		expect(parsed?.options.scale).toBe(2);
@@ -209,6 +383,46 @@ describe('createHandler', () => {
 	test('serves usage at the root', async () => {
 		const response = await handler(new Request('http://x/'));
 		expect(await response.json()).toMatchObject({ motifs: [...MOTIFS] });
+	});
+
+	test('a HEAD carries the length its GET would', async () => {
+		const get = await handler(new Request('http://x/head.svg'));
+		const head = await handler(new Request('http://x/head.svg', { method: 'HEAD' }));
+		const body = await get.text();
+		expect(head.headers.get('content-length')).toBe(String(new Blob([body]).size));
+		expect(await head.text()).toBe('');
+	});
+
+	test('the usage document lists the fonts it accepts', async () => {
+		const usage = await (await handler(new Request('http://x/'))).json();
+		expect(usage.fonts).toEqual(FONT_NAMES);
+		expect(usage.motifs.length).toBe(MOTIFS.length);
+	});
+
+	test('serves the playground to a browser at the root', async () => {
+		const response = await handler(
+			new Request('http://x/', { headers: { accept: 'text/html,*/*' } }),
+		);
+		expect(response.headers.get('content-type')).toContain('text/html');
+		const body = await response.text();
+		expect(body).toContain('placeholder-images playground');
+		// The knob config carries the mount point the page must build URLs against.
+		expect(body).toContain('"base":""');
+	});
+
+	test('playground can be disabled, leaving the JSON usage document', async () => {
+		const bare = createHandler({ playground: false });
+		const response = await bare(new Request('http://x/', { headers: { accept: 'text/html' } }));
+		expect(await response.json()).toMatchObject({ motifs: [...MOTIFS] });
+	});
+
+	test('playground knows its base path and size cap', async () => {
+		const scoped = createHandler({ basePath: '/img', maxSize: 512 });
+		const body = await (
+			await scoped(new Request('http://x/img', { headers: { accept: 'text/html' } }))
+		).text();
+		expect(body).toContain('"base":"/img"');
+		expect(body).toContain('"maxSize":512');
 	});
 
 	test('404s an empty path under a base path', async () => {
@@ -249,12 +463,6 @@ describe('createHandler', () => {
 		expect(base).not.toBe(other);
 	});
 
-	test('HEAD returns headers with no body', async () => {
-		const response = await handler(new Request('http://x/a.svg', { method: 'HEAD' }));
-		expect(response.status).toBe(200);
-		expect(await response.text()).toBe('');
-	});
-
 	test('renders a PNG', async () => {
 		const response = await handler(new Request('http://x/a.png?size=64'));
 		expect(response.status).toBe(200);
@@ -281,5 +489,44 @@ describe('serve', () => {
 		} finally {
 			server.stop();
 		}
+	});
+});
+
+describe('playgroundHtml', () => {
+	const html = playgroundHtml();
+
+	test('inlines the full knob vocabulary', () => {
+		for (const motif of MOTIFS) expect(html).toContain(`"${motif}"`);
+		for (const palette of PALETTES) expect(html).toContain(`"${palette.name}"`);
+		for (const font of FONT_NAMES) expect(html).toContain(`"${font}"`);
+		expect(html).toContain(`"variants":${VARIANTS}`);
+	});
+
+	test('is self-contained: no external asset ever loads', () => {
+		expect(html).not.toMatch(/(src|href)="(https?:)?\/\//);
+		expect(html.startsWith('<!doctype html>')).toBe(true);
+	});
+
+	test('stays ASCII, because the bundler escapes raw templates', () => {
+		// A non-ASCII glyph inside `String.raw` survives transpilation as a
+		// literal `\uXXXX`, which would then print as text in the page.
+		expect([...html].every((character) => character.codePointAt(0) < 128)).toBe(true);
+	});
+
+	test('a palette name cannot close the inline script', () => {
+		const hostile = playgroundHtml({
+			palettes: [
+				{
+					name: '</script><script>alert(1)</script>',
+					field: '#fff',
+					mark: '#000',
+					shade: '#333',
+					spark: '#f00',
+					type: '#000',
+				},
+			],
+		});
+		expect(hostile).not.toContain('</script><script>alert(1)');
+		expect(hostile).toContain('\\u003c/script');
 	});
 });

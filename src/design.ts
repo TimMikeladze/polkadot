@@ -12,6 +12,12 @@ export const MOTIFS = [
 	'prism',
 	'halftone',
 	'horizon',
+	'lattice',
+	'bloom',
+	'stack',
+	'beam',
+	'pebbles',
+	'chevron',
 	'eclipse',
 ] as const;
 
@@ -38,9 +44,16 @@ export type DesignOptions = {
 	palettes?: Palette[];
 	/** Replace the motif set entirely. Values must exist in `MOTIFS`. */
 	motifs?: readonly Motif[];
+	/** Force a variant instead of deriving it from the seed. Wraps to 0-3. */
+	variant?: number;
 	/** Disable the sub-degree tilt. */
 	rotate?: boolean;
+	/** Force the tilt in degrees, instead of the seed's own. Wins over `rotate`. */
+	rotation?: number;
 };
+
+/** Number of placement variants each motif draws. */
+export const VARIANTS = 4;
 
 /** FNV-1a, 32-bit. Small, fast, and stable across runtimes. */
 export function hashSeed(input: string): number {
@@ -66,8 +79,16 @@ export function design(seed: string, options: DesignOptions = {}): Design {
 	const palette = hinted ?? (palettes[hash % palettes.length] as Palette);
 	// Shift bits between choices so motif and palette are not correlated.
 	const motif = hintedMotif ?? (motifs[(hash >>> 8) % motifs.length] as Motif);
-	const variant = (hash >>> 16) % 4;
-	const rotation = options.rotate === false ? 0 : (((hash >>> 20) % 9) - 4) * 1.5;
+	// A forced variant wraps rather than clamps, so `variant=7` is variant 3 of a
+	// four-variant motif instead of silently becoming the last one.
+	const variant = Number.isFinite(options.variant)
+		? ((Math.trunc(options.variant as number) % VARIANTS) + VARIANTS) % VARIANTS
+		: (hash >>> 16) % VARIANTS;
+	const rotation = Number.isFinite(options.rotation)
+		? (options.rotation as number)
+		: options.rotate === false
+			? 0
+			: (((hash >>> 20) % 9) - 4) * 1.5;
 
 	return {
 		palette,

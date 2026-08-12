@@ -167,6 +167,94 @@ export function renderMotif(motif: Motif, palette: Palette, variant: number, see
 			break;
 		}
 
+		case 'lattice': {
+			const count = 5 + variant;
+			const step = 120 / count;
+			for (let index = 0; index <= count; index++) {
+				const offset = index * step;
+				parts.push(
+					`<line x1="${round(offset)}" y1="-10" x2="${round(offset - 40)}" y2="130" stroke="${mark}" stroke-width="${round(2 + at(index) * 3)}" stroke-linecap="round"/>`,
+					`<line x1="${round(offset - 40)}" y1="-10" x2="${round(offset)}" y2="130" stroke="${shade}" stroke-width="${round(2 + at(index + 4) * 3)}" stroke-linecap="round"/>`,
+				);
+			}
+			parts.push(`<circle cx="${round(34 + variant * 18)}" cy="60" r="8" fill="${spark}"/>`);
+			break;
+		}
+
+		case 'bloom': {
+			const petals = 6 + variant * 2;
+			for (let index = 0; index < petals; index++) {
+				const angle = (360 / petals) * index;
+				parts.push(
+					`<ellipse cx="60" cy="36" rx="13" ry="26" fill="${index % 2 === 0 ? mark : shade}" opacity="0.9" transform="rotate(${round(angle)} 60 60)"/>`,
+				);
+			}
+			parts.push(
+				`<circle cx="60" cy="60" r="12" fill="${field}"/>`,
+				`<circle cx="60" cy="60" r="6" fill="${spark}"/>`,
+			);
+			break;
+		}
+
+		case 'stack': {
+			const count = 4 + variant;
+			const height = 104 / count;
+			for (let index = 0; index < count; index++) {
+				const inset = 8 + at(index) * 24;
+				parts.push(
+					`<rect x="${round(inset)}" y="${round(8 + index * height)}" width="${round(120 - inset * 2)}" height="${round(height - 3)}" rx="${round(height / 2 - 1.5)}" fill="${index % 3 === 1 ? shade : mark}"/>`,
+				);
+			}
+			parts.push(
+				`<circle cx="${round(24 + at(2) * 72)}" cy="${round(8 + height / 2)}" r="6" fill="${spark}"/>`,
+			);
+			break;
+		}
+
+		case 'beam': {
+			const count = 6 + variant;
+			// Rays fan out of one corner, so the spread has to cover a quarter turn.
+			for (let index = 0; index < count; index++) {
+				const from = (90 / count) * index;
+				const to = (90 / count) * (index + 1);
+				const radius = 190;
+				parts.push(
+					`<path d="M 0 0 L ${round(Math.cos((from * Math.PI) / 180) * radius)} ${round(Math.sin((from * Math.PI) / 180) * radius)} L ${round(Math.cos((to * Math.PI) / 180) * radius)} ${round(Math.sin((to * Math.PI) / 180) * radius)} Z" fill="${index % 2 === 0 ? mark : shade}" opacity="${index % 2 === 0 ? '1' : '0.75'}"/>`,
+				);
+			}
+			parts.push(`<circle cx="96" cy="96" r="${round(11 + variant * 2)}" fill="${spark}"/>`);
+			break;
+		}
+
+		case 'pebbles': {
+			const count = 9 + variant * 3;
+			for (let index = 0; index < count; index++) {
+				const x = 12 + at(index) * 96;
+				const y = 12 + at(index + 5) * 96;
+				const radius = 5 + at(index + 2) * 13;
+				parts.push(
+					`<circle cx="${round(x)}" cy="${round(y)}" r="${round(radius)}" fill="${index % 4 === 0 ? shade : mark}" opacity="${index % 3 === 0 ? '0.72' : '1'}"/>`,
+				);
+			}
+			parts.push(
+				`<circle cx="${round(20 + at(7) * 80)}" cy="${round(20 + at(8) * 80)}" r="9" fill="${spark}"/>`,
+			);
+			break;
+		}
+
+		case 'chevron': {
+			const count = 4 + variant;
+			const step = 132 / count;
+			for (let index = 0; index < count; index++) {
+				const y = -12 + index * step;
+				parts.push(
+					`<path d="M -6 ${round(y + step * 0.6)} L 60 ${round(y)} L 126 ${round(y + step * 0.6)}" fill="none" stroke="${index % 2 === 0 ? mark : shade}" stroke-width="${round(step * 0.42)}" stroke-linejoin="round"/>`,
+				);
+			}
+			parts.push(`<circle cx="60" cy="${round(108 - variant * 6)}" r="8" fill="${spark}"/>`);
+			break;
+		}
+
 		default: {
 			const offset = 10 + variant * 5;
 			parts.push(

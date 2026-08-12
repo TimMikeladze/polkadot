@@ -4,7 +4,9 @@ Deterministic generative placeholder images from a seed string. Zero dependencie
 
 Use it inline as a library, or link out to a URL and let the endpoint render it.
 
-- **12 palettes × 12 motifs × 4 variants × 9 tilts** — 5,184 combinations, 144 distinct palette/motif buckets at thumbnail size
+- **12 palettes × 18 motifs × 4 variants × 9 tilts** — 7,776 combinations, 216 distinct palette/motif buckets at thumbnail size
+- **Knobs, not guesswork** — force the motif, palette, variant, tilt, type pairing, alignment, and a legibility scrim, from code or from the URL
+- **A playground** — the server root is a knob-driven page with contact sheets for every motif, palette, and variant
 - **SVG** — pure string output, synchronous, no dependencies
 - **PNG** — same drawing rasterised, via the optional `@resvg/resvg-js`
 - **HTTP** — a `fetch` handler that works under Bun, Deno, Workers, and Next.js route handlers
@@ -32,6 +34,36 @@ const cover = renderSvg({
 	width: 600,
 	title: 'Process of Elimination',
 	subtitle: 'Sampha',
+});
+
+// Every derived choice can be forced, and the type block placed
+const art = renderSvg({
+	seed: 'album-42',
+	width: 1200,
+	height: 630,
+	title: 'Process of Elimination',
+	motif: 'waves',
+	palette: 'cobalt',
+	variant: 2, // 0-3, wraps
+	rotation: -6, // degrees; `rotate: false` flattens instead
+	font: 'mono', // serif | sans | mono | display | rounded | slab
+	align: 'center',
+	scrim: 0.7, // fade the field up behind the type so it stays legible
+});
+
+// The type block can go anywhere, at any angle, in any colour
+const poster = renderSvg({
+	seed: 'album-42',
+	width: 800,
+	height: 1000,
+	title: 'Northern Line',
+	subtitle: 'late edition',
+	valign: 'middle', // top | middle | bottom
+	textX: 0.5, // fractions of the canvas, so one URL scales
+	textY: 0.4,
+	textRotation: -8, // degrees, turned around the anchor
+	titleColor: '#ffd166',
+	subtitleColor: 'rebeccapurple',
 });
 
 // Ready for src / background-image
@@ -109,10 +141,39 @@ server.stop();
 | `label`              | Accessible label; defaults to title/subtitle |
 | `motif`              | Force one of the motifs below                |
 | `palette`            | Force a palette by name                      |
+| `variant`, `v`       | Force a placement variant, 0–3 (wraps)       |
+| `font`               | Type pairing: `serif`…`slab`                 |
+| `align`              | `left` (default), `center`, `right`          |
+| `valign`             | `bottom` (default), `middle`, `top`          |
+| `tx`, `ty`           | Type anchor as a 0–1 fraction of the canvas  |
+| `textRotate`         | Turn the type block, in degrees              |
+| `color`              | Type colour; bare hex is fine (`ff3300`)     |
+| `titleColor`         | Title colour, overriding `color`             |
+| `subtitleColor`      | Subtitle colour, overriding `color`          |
+| `scrim`              | Legibility fade, `scrim` or `scrim=0.6`      |
 | `scale`, `dpr`       | Pixel density for PNG, 1–4                   |
-| `rotate=false`       | Disable the sub-degree tilt                  |
+| `rotate`             | `false` to flatten, or a tilt in degrees     |
 
-`GET /` (or the base path) returns the usage document, including the live motif and palette lists.
+`GET /` (or the base path) serves the playground to a browser, and the JSON usage document — including the live motif and palette lists — to everything else. The switch is the `Accept` header, so `curl` still sees JSON. Pass `playground: false` to always serve JSON.
+
+#### Playground
+
+Open the server root in a browser and the same endpoint serves a knob-driven page instead of JSON:
+
+```bash
+bunx placeholder-images --port 3000
+open http://localhost:3000/
+```
+
+- **Every knob**: seed, title, subtitle, alt text, font pairing, horizontal and vertical alignment, free X/Y placement, text rotation, per-line colours, scrim, motif, palette, variant, tilt, width, height, ratio lock, canvas presets (avatar, OG card, banner, story…), format, PNG scale, and preview backdrop
+- **Contact sheets**: tabs that render the current seed across every motif, every palette, and all four variants, plus a gallery of random seeds — click any tile to adopt it
+- **Copy as**: URL, absolute URL, Markdown, `<img>`, CSS `background-image`, raw SVG source, or a `data:` URI, and a one-click download
+- **Shareable state**: the knobs live in the page's hash, so a pasted link reopens the exact design
+- **Keyboard**: `R` reseeds, `M` and `P` jump to a random motif or palette, `←`/`→` walk the variants
+
+It is deliberately boring under the hood: every preview is an `<img>` on the same immutable-cached URL the API serves, so revisiting a knob position is a browser cache hit. Knob changes are coalesced to one update per ~16ms, the main preview is decoded off-thread and swapped in only once ready, and contact sheets fill lazily, reuse their tiles, and always request small SVGs — a 48-tile sheet costs less than one full-size PNG.
+
+Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize })`, which returns a self-contained HTML string with no external assets. `createHandler({ playground: false })` turns it off.
 
 Because output depends only on the URL and the configured palettes, responses carry a strong `ETag` and answer `304` to a matching `If-None-Match`, alongside a one-year immutable `Cache-Control`. `HEAD` is supported; anything other than `GET`/`HEAD` gets a `405`.
 
@@ -124,8 +185,9 @@ Sizes are clamped to `maxSize` (default 2048) and unknown motifs are ignored, so
 import { MOTIFS, PALETTES, design } from 'placeholder-images';
 
 MOTIFS;
-// rings, sun, split, grid, waves, arch, bands, orbit,
-// prism, halftone, horizon, eclipse
+// rings, sun, split, grid, waves, arch, bands, orbit, prism,
+// halftone, horizon, lattice, bloom, stack, beam, pebbles,
+// chevron, eclipse
 
 PALETTES.map((p) => p.name);
 // vermilion, forest, midnight, rust, plum, tide,
@@ -157,6 +219,21 @@ createHandler({ palettes: brand });
 
 Colours land in SVG attribute values, so quotes and angle brackets are stripped before output — a palette built from user-supplied data cannot break out of its attribute.
 
+### Type
+
+```typescript
+import { FONTS, FONT_NAMES } from 'placeholder-images';
+
+FONT_NAMES; // serif, sans, mono, display, rounded, slab
+FONTS.mono; // { title, subtitle } — plain CSS font stacks
+```
+
+Every stack is built from fonts that ship with common desktops: an SVG is rendered by whoever opens it, and the PNG rasteriser only sees installed system fonts, so there is no web font to load. Pass `titleFont` / `subtitleFont` to override a stack outright.
+
+A busy motif can swallow a title — `beam` and `bands` fill most of the canvas with the mark colour. `scrim` fades the field colour up behind the type block to fix that, either as a switch (`scrim: true`, 0.85) or a strength (`scrim: 0.6`).
+
+Placement is a block, not a pair of loose lines: `align` and `valign` set which corner or edge it sits against, `textX`/`textY` override that with plain 0–1 fractions of the canvas, and `textRotation` turns the whole block around that same anchor — so turning the type never slides it out of position. Colours default to the palette's `type`; `titleColor` and `subtitleColor` take any CSS colour and are stripped of quotes and brackets before they reach an attribute. The scrim stays axis-aligned even when the type is turned, because a tilted gradient reads as a rendering bug rather than a choice.
+
 ### Avatars
 
 ```typescript
@@ -170,7 +247,7 @@ seedColors('user-7'); // { background, text }
 
 A 32-bit FNV-1a hash of the seed, sliced into separate bit ranges to pick a palette, a motif, a variant, and a rotation. Distinct ranges mean the choices are uncorrelated. Motifs that need continuous variation (dot radii, wave amplitudes) draw from a seeded xorshift32 stream. Everything is drawn into a 120×120 viewBox and scaled by the outer `<svg>`, so non-square output crops rather than stretches.
 
-Collision note: at 144 perceptual buckets there is a ~50% chance of two lookalikes by the 14th seed. For catalogs beyond a few hundred items, treat this as a fallback rather than a primary identity system.
+Collision note: at 216 perceptual buckets there is a ~50% chance of two lookalikes by the 17th seed. For catalogs beyond a few hundred items, treat this as a fallback rather than a primary identity system.
 
 ## Contributing
 

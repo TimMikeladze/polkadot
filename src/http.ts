@@ -1,5 +1,7 @@
 import { hashSeed, MOTIFS, type Motif } from './design.ts';
+import { FONT_NAMES } from './fonts.ts';
 import { PALETTES, type Palette } from './palettes.ts';
+import { playgroundHtml } from './playground.ts';
 import { renderPng } from './png.ts';
 import { renderSvg, type SvgOptions } from './svg.ts';
 
@@ -12,6 +14,8 @@ export type HandlerOptions = {
 	maxSize?: number;
 	/** `Cache-Control` for successful responses. */
 	cacheControl?: string;
+	/** Serve the knob-driven HTML playground at the mount root. Default true. */
+	playground?: boolean;
 };
 
 const DEFAULT_MAX_SIZE = 2048;
@@ -19,6 +23,21 @@ const DEFAULT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 function clamp(value: number, max: number): number {
 	return Math.min(max, Math.max(1, Math.round(value)));
+}
+
+/**
+ * A colour from a URL. Hex may arrive without its `#`, since a raw `#` ends the
+ * query string, and anything that is not a hex triplet or a bare CSS keyword is
+ * dropped rather than passed through to an attribute.
+ */
+function colorParam(params: URLSearchParams, ...names: string[]): string | undefined {
+	for (const name of names) {
+		const raw = params.get(name)?.trim();
+		if (!raw) continue;
+		if (/^#?[0-9a-f]{3,8}$/i.test(raw)) return raw.startsWith('#') ? raw : `#${raw}`;
+		if (/^[a-z]{3,20}$/i.test(raw)) return raw.toLowerCase();
+	}
+	return undefined;
 }
 
 function numberParam(params: URLSearchParams, ...names: string[]): number | undefined {
@@ -73,6 +92,16 @@ export function parseImageRequest(url: URL, options: HandlerOptions = {}): Parse
 
 	const motif = params.get('motif') ?? undefined;
 	const palette = params.get('palette') ?? undefined;
+	const font = params.get('font') ?? undefined;
+	const align = params.get('align') ?? undefined;
+	const rotate = params.get('rotate');
+	// `rotate` is a boolean by history and a number by request: `rotate=false`
+	// flattens, `rotate=12` tilts by twelve degrees, anything else keeps the
+	// seed's own tilt.
+	const rotation = rotate && rotate !== 'false' ? numberParam(params, 'rotate') : undefined;
+	const scrim = params.get('scrim');
+	const valign = params.get('valign') ?? undefined;
+	const textRotation = numberParam(params, 'textRotate', 'trotate');
 
 	return {
 		format,
@@ -86,7 +115,28 @@ export function parseImageRequest(url: URL, options: HandlerOptions = {}): Parse
 			motif: MOTIFS.includes(motif as Motif) ? motif : undefined,
 			palette,
 			palettes: options.palettes ?? PALETTES,
-			rotate: params.get('rotate') !== 'false',
+			variant: numberParam(params, 'variant', 'v'),
+			font: font && FONT_NAMES.includes(font) ? font : undefined,
+			align: align === 'center' || align === 'right' ? align : undefined,
+			valign: valign === 'top' || valign === 'middle' ? valign : undefined,
+			// Fractions of the canvas, so the same URL places the type identically
+			// at every size.
+			textX: numberParam(params, 'tx', 'textX'),
+			textY: numberParam(params, 'ty', 'textY'),
+			textRotation:
+				textRotation === undefined ? undefined : Math.max(-180, Math.min(180, textRotation)),
+			titleColor: colorParam(params, 'titleColor', 'color'),
+			subtitleColor: colorParam(params, 'subtitleColor', 'color'),
+			// `scrim` reads as a switch or a strength: `scrim`, `scrim=true` and
+			// `scrim=0.6` all mean something, `scrim=false` and `scrim=0` mean off.
+			scrim:
+				scrim === null || scrim === 'false'
+					? undefined
+					: scrim === '' || scrim === 'true'
+						? true
+						: Math.max(0, Math.min(1, Number(scrim) || 0)) || undefined,
+			rotate: rotate !== 'false',
+			rotation: rotation !== undefined ? Math.max(-45, Math.min(45, rotation)) : undefined,
 			// `maxSize` caps rasterised pixels, not just the nominal width, so
 			// `?w=2048&scale=4` cannot ask for an 8192px PNG.
 			scale: Math.min(4, maxSize / width, Math.max(1, numberParam(params, 'scale', 'dpr') ?? 1)),
@@ -105,6 +155,7 @@ export function createHandler(
 	const cacheControl = options.cacheControl ?? DEFAULT_CACHE_CONTROL;
 
 	const basePath = (options.basePath ?? '').replace(/\/+$/, '');
+	let html: string | undefined;
 
 	// Palettes are part of the output, so they belong in the cache key. Without
 	// this, changing a brand colour would serve 304 to every client still
@@ -128,8 +179,17 @@ export function createHandler(
 		if (request.headers.get('if-none-match') === etag) {
 			return new Response(null, { status: 304, headers: { etag, 'cache-control': cacheControl } });
 		}
+		// A HEAD answer carries the headers its GET would, `content-length`
+		// included — that is the whole point of asking for one.
+		const length =
+			typeof body === 'string' ? new TextEncoder().encode(body).byteLength : body.byteLength;
 		return new Response(request.method === 'HEAD' ? null : (body as BodyInit), {
-			headers: { 'content-type': contentType, 'cache-control': cacheControl, etag },
+			headers: {
+				'content-type': contentType,
+				'cache-control': cacheControl,
+				'content-length': String(length),
+				etag,
+			},
 		});
 	};
 
@@ -145,18 +205,37 @@ export function createHandler(
 		const root = url.pathname.replace(/\/+$/, '') || '/';
 
 		if (root === (basePath || '/')) {
+			// A browser asks for HTML and gets the playground; anything else — curl,
+			// a client library — still gets the machine-readable usage document.
+			const wantsHtml = (request.headers.get('accept') ?? '').includes('text/html');
+			if (options.playground !== false && wantsHtml) {
+				// The page is static for a given config, so build it once per handler.
+				html ??= playgroundHtml(options);
+				return new Response(request.method === 'HEAD' ? null : html, {
+					headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
+				});
+			}
 			return Response.json({
 				usage: '/{seed}.svg or /{seed}.png',
 				params: [
 					'w, h, size',
-					'title, subtitle',
+					'title, subtitle, label',
 					'motif',
 					'palette',
+					'variant (0-3)',
+					'font',
+					'align (left|center|right)',
+					'valign (top|middle|bottom)',
+					'tx, ty (0-1)',
+					'textRotate (degrees)',
+					'color, titleColor, subtitleColor',
+					'scrim (0-1)',
 					'scale (png)',
-					'rotate=false',
+					'rotate=false or rotate=<degrees>',
 				],
 				motifs: MOTIFS,
 				palettes: (options.palettes ?? PALETTES).map((entry) => entry.name),
+				fonts: FONT_NAMES,
 			});
 		}
 
