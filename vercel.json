@@ -3,5 +3,11 @@
 	"buildCommand": "bun run build",
 	"installCommand": "bun install",
 	"framework": null,
-	"rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+	"rewrites": [
+		{
+			"source": "/(.*)",
+			"destination": "/api"
+		}
+	],
+	"outputDirectory": "public"
 }
