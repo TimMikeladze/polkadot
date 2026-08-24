@@ -107,8 +107,11 @@ header .grow { flex: 1; }
 header .actions { display: flex; align-items: center; gap: 6px; }
 @media (max-width: 980px) { header .tag.keys { display: none; } }
 @media (max-width: 560px) { header .tag { display: none; } }
-.wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; padding: 20px; align-items: start; }
-@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+.wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr) 280px; gap: 20px; padding: 20px; align-items: start; }
+/* Knobs, stage, output. Below 1240px the output rail drops under the stage;
+   below 900px everything stacks. */
+@media (max-width: 1240px) { .wrap { grid-template-columns: 300px minmax(0, 1fr); } .rail { grid-column: 2; } }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } .rail { grid-column: 1; } }
 
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
 #knobs { position: sticky; top: 64px; max-height: calc(100vh - 84px); overflow-y: auto; padding: 0 0 8px; overscroll-behavior: contain; }
@@ -240,22 +243,24 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 .grid-head p { margin: 0; color: var(--muted); font-size: 12px; flex: 1; min-width: 200px; }
 .grid-head select { width: auto; }
 
-.out {
-	display: flex; flex-direction: column; gap: 8px; padding: 14px 16px;
-	/* The URL is the product, so it sits above the picture and stays there
-	   while the sheets scroll under it. */
-	position: sticky; top: 60px; z-index: 4;
-	background: color-mix(in srgb, var(--panel) 92%, transparent);
-	backdrop-filter: saturate(180%) blur(12px);
-}
-@media (max-width: 900px) { .out { position: static; } }
-.out .url { display: flex; gap: 8px; align-items: center; }
+/* The URL is what the page is for, so it gets its own rail and rides along
+   while the sheets scroll past. */
+.rail { position: sticky; top: 64px; }
+@media (max-width: 1240px) { .rail { position: static; } }
+.out { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+.out h2.section { margin: 0; }
+.out .url { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
 .out code {
-	flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; background: var(--sunk);
-	border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
-	font: 400 12px/1.4 var(--mono);
+	min-width: 0; background: var(--sunk); max-height: 140px; overflow-y: auto;
+	border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px;
+	font: 400 12px/1.5 var(--mono);
+	/* Wrapped, not scrolled: in a narrow rail a one-line URL would hide most of
+	   itself behind a scrollbar nobody drags. */
+	white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .out .chips { margin-top: 0; }
+.out .chips button { flex: 1 1 calc(50% - 3px); }
+@media (max-width: 1240px) { .out .chips button { flex: 0 1 auto; } }
 .toast {
 	position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px);
 	background: var(--accent); color: var(--on-accent); padding: 8px 14px; border-radius: 999px;
@@ -404,16 +409,6 @@ const BODY = String.raw`
 	</form>
 
 	<div class="stage">
-		<div class="panel out">
-			<div class="url"><code id="urlOut"></code><button type="button" id="copyUrl" class="primary">Copy</button></div>
-			<div class="chips">
-				<button type="button" data-copy="absolute">Absolute URL</button>
-				<button type="button" data-copy="markdown">Markdown</button>
-				<button type="button" data-copy="html">&lt;img&gt;</button>
-				<button type="button" data-copy="css">CSS</button>
-				<button type="button" data-copy="source">SVG source</button>
-				<button type="button" data-copy="datauri">Data URI</button>
-			</div>
 
 		<div class="panel view" id="view-preview" aria-labelledby="h-preview">
 			<h2 class="section" id="h-preview">Preview</h2>
@@ -457,9 +452,22 @@ const BODY = String.raw`
 		</div>
 
 		<div class="panel view docs" id="view-docs" aria-labelledby="h-docs"></div>
-
-		</div>
 	</div>
+
+	<aside class="rail">
+		<div class="panel out" aria-labelledby="h-url">
+			<h2 class="section" id="h-url">URL</h2>
+			<div class="url"><code id="urlOut"></code><button type="button" id="copyUrl" class="primary">Copy</button></div>
+			<div class="chips">
+				<button type="button" data-copy="absolute">Absolute URL</button>
+				<button type="button" data-copy="markdown">Markdown</button>
+				<button type="button" data-copy="html">&lt;img&gt;</button>
+				<button type="button" data-copy="css">CSS</button>
+				<button type="button" data-copy="source">SVG source</button>
+				<button type="button" data-copy="datauri">Data URI</button>
+			</div>
+		</div>
+	</aside>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog id="keysDialog">
