@@ -131,7 +131,7 @@ describe('renderSvg', () => {
 		expect(svg).toContain('ui-monospace');
 		expect(svg).not.toContain('Georgia');
 		// An unknown name is a fallback, not a crash.
-		expect(renderSvg({ seed: 'x', title: 'Hi', font: 'nope' })).toContain('Georgia');
+		expect(renderSvg({ seed: 'x', title: 'Hi', font: 'nope' })).toContain('Futura');
 	});
 
 	test('valign moves the block, and bottom is the default', () => {

@@ -35,7 +35,7 @@ const HUMANIST =
 	"Optima, 'Gill Sans', 'Gill Sans MT', Candara, 'Trebuchet MS', 'Segoe UI', ui-sans-serif, sans-serif";
 
 export const FONTS: Record<string, FontPair> = {
-	// Old-style book serif: generous, readable at poster size, and the default.
+	// Old-style book serif: generous, and the one pairing that reads as a book.
 	serif: {
 		title:
 			"'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', 'Hoefler Text', Georgia, 'Liberation Serif', ui-serif, serif",
@@ -68,7 +68,8 @@ export const FONTS: Record<string, FontPair> = {
 		subtitle: MONO,
 		advance: 0.56,
 	},
-	// Geometric grotesque, the poster face: wide, even, all-caps friendly.
+	// Geometric grotesque, the poster face and the default: wide, even, and
+	// modern without being neutral.
 	grotesk: {
 		title:
 			"Futura, 'Century Gothic', 'Avenir Next', Avenir, 'Segoe UI', 'Liberation Sans', ui-sans-serif, sans-serif",
@@ -81,7 +82,7 @@ export const FONTS: Record<string, FontPair> = {
 
 export const FONT_NAMES: string[] = Object.keys(FONTS);
 
-/** Resolve a font name to a pair. Unknown names fall back to `serif`. */
+/** Resolve a font name to a pair. Unknown names fall back to `grotesk`. */
 export function fontPair(name?: string): FontPair {
-	return (name && FONTS[name]) || (FONTS.serif as FontPair);
+	return (name && FONTS[name]) || (FONTS.grotesk as FontPair);
 }

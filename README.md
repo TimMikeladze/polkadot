@@ -168,16 +168,16 @@ open http://localhost:3000/
 ```
 
 - **Every knob**: seed, title, subtitle, alt text, font pairing, horizontal and vertical alignment, free X/Y placement, text rotation, per-line colours, scrim, motif, palette, variant, tilt, width, height, ratio lock, canvas presets (avatar, OG card, banner, story…), format, PNG scale, and preview backdrop
-- **Contact sheets**: tabs that render the current seed across every motif, every palette, and all four variants, plus a gallery of random seeds — click any tile to adopt it
+- **One page, no tabs**: preview, gallery, motifs, palettes, variants, and the API reference are all on the page at once — every sheet updates with the knobs, and the tiles below the fold fetch nothing until you scroll to them
 - **Copy as**: URL, absolute URL, Markdown, `<img>`, CSS `background-image`, raw SVG source, or a `data:` URI, and a one-click download
 - **Shareable state**: the knobs live in the page's hash, so a pasted link reopens the exact design
-- **API reference**: an in-page tab listing every parameter, motif, palette, and font, built from the same config the server validates against
+- **API reference**: a section listing every parameter, motif, palette, and font, built from the same config the server validates against
 - **Honest states**: the preview shows when it is rendering, and says what went wrong when a URL does not render — a `501` from a host without the PNG rasteriser reads as exactly that
-- **Keyboard**: `R` reseeds, `M` and `P` jump to a random motif or palette, `S` surprises, `C` copies, `D` downloads, `←`/`→` walk the variants, `1`–`6` switch tabs, and `?` opens the shortcut sheet
+- **Keyboard**: `R` reseeds, `M` and `P` jump to a random motif or palette, `S` surprises, `C` copies, `D` downloads, `←`/`→` walk the variants, `1`–`6` jump to a section, and `?` opens the shortcut sheet
 
 It is deliberately boring under the hood: every preview is an `<img>` on the same immutable-cached URL the API serves, so revisiting a knob position is a browser cache hit. Knob changes are coalesced to one update per ~16ms, the main preview is decoded off-thread and swapped in only once ready, and contact sheets fill lazily, reuse their tiles, and always request small SVGs — a 48-tile sheet costs less than one full-size PNG.
 
-Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize })`, which returns a single HTML string with no build step. Its own type — Inter Tight, Instrument Serif, and JetBrains Mono — comes from Google Fonts with `display=swap`, so the page is readable on system stacks before the fonts land and stays readable if they never do. That link is the page's only external asset; `webfonts: false` drops it, on `playgroundHtml` or on `createHandler`, leaving a page that loads nothing off-site. `createHandler({ playground: false })` turns the page off entirely.
+Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize })`, which returns a single HTML string with no build step. Its own type — Inter Tight for text, Space Grotesk for the wordmark and headings, JetBrains Mono for values and code — comes from Google Fonts with `display=swap`, so the page is readable on system stacks before the fonts land and stays readable if they never do. That link is the page's only external asset; `webfonts: false` drops it, on `playgroundHtml` or on `createHandler`, leaving a page that loads nothing off-site. `createHandler({ playground: false })` turns the page off entirely.
 
 #### Deploying to Vercel
 
@@ -243,9 +243,9 @@ FONT_NAMES; // serif, sans, mono, display, rounded, slab, grotesk, humanist
 FONTS.mono; // { title, subtitle, advance } — plain CSS font stacks
 ```
 
-Eight pairings: an old-style book serif (`serif`, the default), a neutral grotesque (`sans`), a code face (`mono`), a high-contrast didone (`display`), a soft geometric (`rounded`), an editorial slab (`slab`), a wide poster geometric (`grotesk`), and a calligraphic humanist sans (`humanist`).
+Eight pairings: an old-style book serif (`serif`), a neutral grotesque (`sans`), a code face (`mono`), a high-contrast didone (`display`), a soft geometric (`rounded`), an editorial slab (`slab`), a wide poster geometric (`grotesk`, the default), and a calligraphic humanist sans (`humanist`).
 
-Every stack is built from fonts that ship with common desktops: an SVG is rendered by whoever opens it, and the PNG rasteriser only sees installed system fonts, so there is no web font to load. Each one ends with the Liberation/DejaVu names a Linux server actually has and then a generic family, so a missing face degrades to the right *shape* rather than to the renderer's single default. `advance` is the face's average glyph width in ems — a string renderer cannot measure text, so line breaking counts with that instead of one shared guess, and a mono or geometric title wraps before it runs past the edge. Pass `titleFont` / `subtitleFont` to override a stack outright.
+Every stack is built from fonts that ship with common desktops: an SVG is rendered by whoever opens it, and the PNG rasteriser only sees installed system fonts, so there is no web font to load. Each one ends with the Liberation/DejaVu names a Linux server actually has and then a generic family, so a missing face degrades to the right _shape_ rather than to the renderer's single default. `advance` is the face's average glyph width in ems — a string renderer cannot measure text, so line breaking counts with that instead of one shared guess, and a mono or geometric title wraps before it runs past the edge. Pass `titleFont` / `subtitleFont` to override a stack outright.
 
 A busy motif can swallow a title — `beam` and `bands` fill most of the canvas with the mark colour. `scrim` fades the field colour up behind the type block to fix that, either as a switch (`scrim: true`, 0.85) or a strength (`scrim: 0.6`).
 

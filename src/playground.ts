@@ -42,9 +42,11 @@ const STYLE = String.raw`
 	--shadow: 0 1px 2px rgba(20, 18, 24, 0.05), 0 8px 24px -16px rgba(20, 18, 24, 0.3);
 	--brand: #c0563e;
 	--radius: 12px;
-	--ui: 'Inter Tight', 'Inter', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+	--ui: 'Inter Tight', Inter, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 	--mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-	--wordmark: 'Instrument Serif', 'Iowan Old Style', Palatino, Georgia, serif;
+	/* Grotesk for anything that names something — the wordmark, section
+	   headings, tabs — so the interface has a voice the body text does not. */
+	--display: 'Space Grotesk', 'Inter Tight', -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 :root[data-theme="dark"] {
 	color-scheme: dark;
@@ -79,8 +81,8 @@ body {
 	margin: 0;
 	background: var(--bg);
 	color: var(--ink);
-	font: 400 14px/1.5 var(--ui);
-	font-feature-settings: 'cv05' 1, 'ss03' 1;
+	font: 400 13.5px/1.5 var(--ui);
+	font-feature-settings: 'cv05' 1, 'ss03' 1, 'tnum' 0;
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;
 }
@@ -93,7 +95,7 @@ header {
 }
 header .brand { display: flex; align-items: center; gap: 10px; margin-right: 2px; }
 header .logo { display: block; width: 26px; height: 26px; flex: none; }
-header h1 { font: 400 23px/1 var(--wordmark); margin: 0; letter-spacing: -0.005em; }
+header h1 { font: 700 19px/1 var(--display); margin: 0; letter-spacing: -0.045em; }
 /* A hairline instead of a bullet: the tagline is an aside, not a second title. */
 header .tag {
 	color: var(--muted); font-size: 12px; padding-left: 11px;
@@ -119,11 +121,11 @@ legend { padding: 0; }
 legend > span {
 	display: flex; align-items: center; gap: 10px;
 	padding: 12px 0 2px; color: var(--muted);
-	font-size: 11px; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase;
+	font: 500 11px/1.4 var(--display); letter-spacing: 0.14em; text-transform: uppercase;
 }
 legend > span::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 label { display: block; margin: 12px 0 0; }
-label > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--muted); font-size: 11px; font-weight: 550; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+label > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--muted); font: 500 10.5px/1.4 var(--display); letter-spacing: 0.11em; text-transform: uppercase; margin-bottom: 6px; }
 /* Live values are read while dragging, so they get monospace digits and a chip
    of their own rather than blending into the label. */
 label > span b {
@@ -197,9 +199,13 @@ input[type=color] {
 .check input { accent-color: var(--accent); }
 
 .stage { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.tabs { display: flex; gap: 4px; padding: 6px; overflow-x: auto; }
-.tabs button { border: 0; background: transparent; color: var(--muted); font-size: 13px; }
-.tabs button[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
+/* One page, so each panel names itself instead of leaning on a tab. */
+h2.section {
+	margin: 0 0 14px; color: var(--muted);
+	font: 500 11px/1.4 var(--display); letter-spacing: 0.14em; text-transform: uppercase;
+	display: flex; align-items: center; gap: 10px;
+}
+h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .view { padding: 18px; }
 .view[hidden] { display: none; }
 .frame {
@@ -234,7 +240,13 @@ input[type=color] {
 .grid-head p { margin: 0; color: var(--muted); font-size: 12px; flex: 1; min-width: 200px; }
 .grid-head select { width: auto; }
 
-.out { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; }
+.out {
+	display: flex; flex-direction: column; gap: 8px; padding: 14px 16px;
+	position: sticky; bottom: 14px; z-index: 4;
+	background: color-mix(in srgb, var(--panel) 92%, transparent);
+	backdrop-filter: saturate(180%) blur(12px);
+}
+@media (max-width: 900px) { .out { position: static; } }
 .out .url { display: flex; gap: 8px; align-items: center; }
 .out code {
 	flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; background: var(--sunk);
@@ -272,7 +284,7 @@ kbd { font: 500 11px/1 var(--mono); border: 1px solid var(--line); border-bottom
 
 /* API reference tab */
 .docs { display: flex; flex-direction: column; gap: 22px; }
-.docs h2 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 650; }
+.docs h2 { font: 500 11px/1.4 var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
 .docs p { margin: 0 0 12px; color: var(--muted); max-width: 68ch; }
 .docs pre {
 	margin: 0; overflow-x: auto; background: var(--sunk); border: 1px solid var(--line);
@@ -293,7 +305,7 @@ dialog {
 	color: var(--ink); padding: 18px 20px; box-shadow: var(--shadow); max-width: 340px; width: calc(100% - 32px);
 }
 dialog::backdrop { background: rgba(10, 10, 14, 0.45); }
-dialog h2 { margin: 0 0 12px; font-size: 14px; }
+dialog h2 { margin: 0 0 14px; font: 600 14px/1 var(--display); letter-spacing: -0.02em; }
 dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 0; font-size: 13px; align-items: center; }
 dialog dd { margin: 0; color: var(--muted); }
 .skip {
@@ -390,9 +402,8 @@ const BODY = String.raw`
 	</form>
 
 	<div class="stage">
-		<div class="panel"><div class="tabs" id="tabs" role="tablist"></div></div>
-
-		<div class="panel view" id="view-preview" role="tabpanel" aria-label="Preview">
+		<div class="panel view" id="view-preview" aria-labelledby="h-preview">
+			<h2 class="section" id="h-preview">Preview</h2>
 			<div class="frame" id="frame" data-backdrop="checker" data-state="loading"><img id="preview" alt="preview"><div class="error" role="alert"><b id="errorTitle">That URL did not render</b><span id="errorBody"></span></div></div>
 			<div class="meta">
 				<span>Rendered <b id="metaSize">&mdash;</b></span>
@@ -403,7 +414,8 @@ const BODY = String.raw`
 			</div>
 		</div>
 
-		<div class="panel view" id="view-gallery" role="tabpanel" aria-label="Gallery" hidden>
+		<div class="panel view" id="view-gallery" aria-labelledby="h-gallery">
+			<h2 class="section" id="h-gallery">Gallery</h2>
 			<div class="grid-head">
 				<p>Random seeds with the current knobs. Click one to adopt its seed.</p>
 				<select id="galleryCount"></select>
@@ -412,22 +424,25 @@ const BODY = String.raw`
 			<div class="grid" id="galleryGrid"></div>
 		</div>
 
-		<div class="panel view" id="view-motifs" role="tabpanel" aria-label="Motifs" hidden>
+		<div class="panel view" id="view-motifs" aria-labelledby="h-motifs">
+			<h2 class="section" id="h-motifs">Motifs</h2>
 			<div class="grid-head"><p>This seed in every motif. Click one to lock it in.</p></div>
 			<div class="grid" id="motifGrid"></div>
 		</div>
 
-		<div class="panel view" id="view-palettes" role="tabpanel" aria-label="Palettes" hidden>
+		<div class="panel view" id="view-palettes" aria-labelledby="h-palettes">
+			<h2 class="section" id="h-palettes">Palettes</h2>
 			<div class="grid-head"><p>This design in every palette.</p></div>
 			<div class="grid" id="paletteGrid"></div>
 		</div>
 
-		<div class="panel view" id="view-variants" role="tabpanel" aria-label="Variants" hidden>
+		<div class="panel view" id="view-variants" aria-labelledby="h-variants">
+			<h2 class="section" id="h-variants">Variants</h2>
 			<div class="grid-head"><p>Placement variants of the current motif.</p></div>
 			<div class="grid" id="variantGrid"></div>
 		</div>
 
-		<div class="panel view docs" id="view-docs" role="tabpanel" aria-label="API" hidden></div>
+		<div class="panel view docs" id="view-docs" aria-labelledby="h-docs"></div>
 
 		<div class="panel out">
 			<div class="url"><code id="urlOut"></code><button type="button" id="copyUrl" class="primary">Copy</button></div>
@@ -453,7 +468,7 @@ const BODY = String.raw`
 		<dt><kbd>C</kbd></dt><dd>Copy the URL</dd>
 		<dt><kbd>D</kbd></dt><dd>Download</dd>
 		<dt><kbd>&larr;</kbd><kbd>&rarr;</kbd></dt><dd>Step the variant</dd>
-		<dt><kbd>1</kbd>&ndash;<kbd>6</kbd></dt><dd>Switch tab</dd>
+		<dt><kbd>1</kbd>&ndash;<kbd>6</kbd></dt><dd>Jump to a section</dd>
 		<dt><kbd>?</kbd></dt><dd>This sheet</dd>
 	</dl>
 	<div class="chips"><button type="button" id="keysClose" class="primary">Close</button></div>
@@ -466,20 +481,15 @@ const BODY = String.raw`
  */
 const SCRIPT = String.raw`
 const $ = (id) => document.getElementById(id);
-const TABS = [
-	['preview', 'Preview'],
-	['gallery', 'Gallery'],
-	['motifs', 'Motifs'],
-	['palettes', 'Palettes'],
-	['variants', 'Variants'],
-	['docs', 'API'],
-];
+/* Section ids, in page order. Everything renders at once now; the list is what
+   the number keys jump to and what a refresh walks. */
+const SECTIONS = ['preview', 'gallery', 'motifs', 'palettes', 'variants', 'docs'];
 const DEFAULTS = {
 	seed: 'hello-world', title: 'Hello World', subtitle: '', label: '',
 	motif: '', palette: '', variant: '', font: '', align: 'left', valign: 'bottom', scrim: 0,
 	tx: '', ty: '', textRotate: 0, titleColor: '', subtitleColor: '',
 	w: 600, h: 600, format: 'svg', scale: 1, tilt: 'auto',
-	backdrop: 'checker', tab: 'preview', count: 12, lock: false,
+	backdrop: 'checker', count: 12, lock: false,
 };
 const state = Object.assign({}, DEFAULTS);
 let ratio = 1;
@@ -550,7 +560,7 @@ function apply() {
 		$('urlOut').textContent = url;
 		swapPreview(url);
 	}
-	refreshTab();
+	refreshSheets();
 	saveHash();
 }
 
@@ -613,10 +623,17 @@ function weigh(url) {
 	});
 }
 
-/* ---------- Tabs and contact sheets ---------- */
+/* ---------- Contact sheets ---------- */
 
-function refreshTab() {
-	const tab = state.tab;
+/* Every sheet lives on the page at once. Rebuilding them all on a knob change
+   is cheap because the tiles are reused and their images are lazy: a sheet
+   below the fold updates its src attributes and fetches nothing until it is
+   scrolled to. */
+function refreshSheets() {
+	for (const section of SECTIONS) refreshSheet(section);
+}
+
+function refreshSheet(tab) {
 	if (tab === 'preview' || !dirty[tab]) return;
 	dirty[tab] = false;
 	if (tab === 'gallery') {
@@ -680,7 +697,7 @@ const PARAMS = [
 	['motif', 'Force the drawing. Otherwise derived from the seed.', 'from seed'],
 	['palette', 'Force the colours. Otherwise derived from the seed.', 'from seed'],
 	['variant', 'Placement variant, 0–3. Wraps.', 'from seed'],
-	['font', 'Type pairing.', 'serif'],
+	['font', 'Type pairing.', 'grotesk'],
 	['align', '~left~, ~center~, or ~right~.', 'left'],
 	['valign', '~top~, ~middle~, or ~bottom~.', 'bottom'],
 	['tx, ty', 'Type position as a fraction of the canvas, 0–1.', 'auto'],
@@ -739,14 +756,9 @@ function gallerySeeds() {
 	return seeds;
 }
 
-function selectTab(tab) {
-	state.tab = tab;
-	for (const entry of TABS) {
-		$('view-' + entry[0]).hidden = entry[0] !== tab;
-		$('tab-' + entry[0]).setAttribute('aria-selected', String(entry[0] === tab));
-	}
-	refreshTab();
-	saveHash();
+function jumpTo(section) {
+	const view = $('view-' + section);
+	if (view) view.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 /* ---------- Knob wiring ---------- */
@@ -919,7 +931,7 @@ function loadHash() {
 	for (const palette of CONFIG.palettes) paletteSelect.append(new Option(palette.name, palette.name));
 
 	const fontSelect = $('font');
-	fontSelect.append(new Option('default (serif)', ''));
+	fontSelect.append(new Option('default (grotesk)', ''));
 	for (const font of CONFIG.fonts) {
 		const option = new Option(font, font);
 		// Preview the pairing in the menu: the name of a face says much less
@@ -947,16 +959,6 @@ function loadHash() {
 		$('presets').append(button);
 	}
 
-	const tabs = $('tabs');
-	for (const entry of TABS) {
-		const button = document.createElement('button');
-		button.type = 'button';
-		button.id = 'tab-' + entry[0];
-		button.textContent = entry[1];
-		button.setAttribute('role', 'tab');
-		button.addEventListener('click', function () { selectTab(entry[0]); });
-		tabs.append(button);
-	}
 })();
 
 for (const id of ['seed', 'title', 'subtitle', 'label']) {
@@ -1031,11 +1033,11 @@ function pick(values) { return values[Math.floor(Math.random() * values.length)]
 function randomSeed() { state.seed = Math.random().toString(36).slice(2, 10); markDirty(); schedule(); }
 
 $('dice').addEventListener('click', randomSeed);
-$('shuffle').addEventListener('click', function () { gallerySalt++; dirty.gallery = true; refreshTab(); });
+$('shuffle').addEventListener('click', function () { gallerySalt++; dirty.gallery = true; refreshSheet('gallery'); });
 $('galleryCount').addEventListener('change', function () {
 	state.count = Number($('galleryCount').value);
 	dirty.gallery = true;
-	refreshTab();
+	refreshSheet('gallery');
 	saveHash();
 });
 $('surprise').addEventListener('click', function () {
@@ -1094,7 +1096,7 @@ document.addEventListener('keydown', function (event) {
 	if ($('keysDialog').open) return;
 	const key = event.key.toLowerCase();
 	if (event.key === '?') $('keysDialog').showModal();
-	else if (key >= '1' && key <= String(TABS.length) && TABS[Number(key) - 1]) selectTab(TABS[Number(key) - 1][0]);
+	else if (key >= '1' && key <= String(SECTIONS.length) && SECTIONS[Number(key) - 1]) jumpTo(SECTIONS[Number(key) - 1]);
 	else if (key === 's') $('surprise').click();
 	else if (key === 'c') copy(absolute(currentUrl), 'URL copied');
 	else if (key === 'd') download();
@@ -1122,12 +1124,11 @@ try {
 addEventListener('hashchange', function () {
 	loadHash();
 	markDirty();
-	selectTab(state.tab);
 	schedule();
 });
 
 loadHash();
-selectTab(state.tab);
+fillDocs();
 apply();
 `;
 
@@ -1154,7 +1155,7 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 			? ''
 			: `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 `;
 	const palettes = options.palettes ?? PALETTES;
 	const config = JSON.stringify({
