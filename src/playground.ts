@@ -34,6 +34,7 @@ const STYLE = String.raw`
 	--accent: #17161a;
 	--on-accent: #fffffe;
 	--shadow: 0 1px 2px rgba(20, 18, 24, 0.05), 0 8px 24px -16px rgba(20, 18, 24, 0.3);
+	--brand: #c0563e;
 	--radius: 12px;
 }
 :root[data-theme="dark"] {
@@ -47,6 +48,7 @@ const STYLE = String.raw`
 	--accent: #f2f1ee;
 	--on-accent: #101013;
 	--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
+	--brand: #e0755a;
 }
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme="light"]) {
@@ -59,6 +61,7 @@ const STYLE = String.raw`
 		--accent: #f2f1ee;
 		--on-accent: #101013;
 		--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
+		--brand: #e0755a;
 	}
 }
 * { box-sizing: border-box; }
@@ -71,35 +74,87 @@ body {
 	-webkit-font-smoothing: antialiased;
 }
 header {
-	display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-	padding: 12px 20px; border-bottom: 1px solid var(--line);
-	background: var(--panel); position: sticky; top: 0; z-index: 5;
+	display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+	padding: 10px 20px; border-bottom: 1px solid var(--line);
+	background: color-mix(in srgb, var(--panel) 88%, transparent);
+	backdrop-filter: saturate(180%) blur(12px);
+	position: sticky; top: 0; z-index: 5;
 }
-header h1 { font: 600 15px/1 inherit; margin: 0; letter-spacing: -0.01em; }
-header .tag { color: var(--muted); font-size: 12px; }
+header .brand { display: flex; align-items: center; gap: 10px; margin-right: 2px; }
+header .logo { display: block; width: 26px; height: 26px; flex: none; }
+header h1 { font: 650 16px/1 inherit; margin: 0; letter-spacing: -0.02em; }
+/* A hairline instead of a bullet: the tagline is an aside, not a second title. */
+header .tag {
+	color: var(--muted); font-size: 12px; padding-left: 11px;
+	border-left: 1px solid var(--line); line-height: 1.4;
+}
+header .tag.keys { display: flex; align-items: center; gap: 5px; }
+header .tag.keys em { font-style: normal; margin-right: 4px; }
 header .grow { flex: 1; }
-@media (max-width: 720px) { header .tag.keys { display: none; } }
+header .actions { display: flex; align-items: center; gap: 6px; }
+@media (max-width: 980px) { header .tag.keys { display: none; } }
+@media (max-width: 560px) { header .tag { display: none; } }
 .wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; padding: 20px; align-items: start; }
 @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
 
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-#knobs { position: sticky; top: 68px; max-height: calc(100vh - 88px); overflow-y: auto; padding: 4px 0 8px; }
+#knobs { position: sticky; top: 64px; max-height: calc(100vh - 84px); overflow-y: auto; padding: 0 0 8px; overscroll-behavior: contain; }
 @media (max-width: 900px) { #knobs { position: static; max-height: none; } }
-fieldset { border: 0; border-top: 1px solid var(--line); margin: 0; padding: 12px 16px 16px; }
-fieldset:first-of-type { border-top: 0; }
-legend { padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; }
+fieldset { border: 0; margin: 0; padding: 4px 16px 18px; }
+fieldset + fieldset { border-top: 1px solid var(--line); }
+legend { padding: 0; }
+/* The heading sits on a hairline that runs to the panel edge, so the sections
+   read as bands rather than as one long column of controls. */
+legend > span {
+	display: flex; align-items: center; gap: 10px;
+	padding: 12px 0 2px; color: var(--muted);
+	font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+}
+legend > span::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 label { display: block; margin: 12px 0 0; }
 label > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--muted); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 5px; }
-label > span b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: 0; text-transform: none; }
+/* Live values are read while dragging, so they get monospace digits and a chip
+   of their own rather than blending into the label. */
+label > span b {
+	color: var(--ink); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none;
+	background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px;
+}
 input[type=text], select {
-	width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px;
+	width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px;
 	background: var(--sunk); color: var(--ink); font: inherit;
 }
-input[type=text]:focus-visible, select:focus-visible, button:focus-visible {
+input[type=text]:hover, select:hover { border-color: var(--muted); }
+select {
+	appearance: none; padding-right: 28px; cursor: pointer;
+	background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+		linear-gradient(135deg, currentColor 50%, transparent 50%);
+	background-size: 5px 5px, 5px 5px;
+	background-position: right 13px center, right 8px center;
+	background-repeat: no-repeat;
+}
+input[type=text]:focus-visible, select:focus-visible, button:focus-visible,
+input[type=range]:focus-visible, input[type=color]:focus-visible {
 	outline: 2px solid var(--accent); outline-offset: 1px;
 }
-input[type=range] { width: 100%; accent-color: var(--accent); }
-input[type=range]:disabled { opacity: 0.4; }
+/* A hand-drawn track: the native control is a different height in every
+   browser, which makes the slider rows fail to line up with each other. */
+input[type=range] {
+	appearance: none; width: 100%; height: 20px; background: transparent; cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 999px; background: var(--line); }
+input[type=range]::-moz-range-track { height: 4px; border-radius: 999px; background: var(--line); }
+input[type=range]::-webkit-slider-thumb {
+	appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%;
+	background: var(--accent); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--accent);
+}
+input[type=range]::-moz-range-thumb {
+	width: 14px; height: 14px; border-radius: 50%;
+	background: var(--accent); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--accent);
+}
+input[type=range]:hover::-webkit-slider-thumb { background: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+input[type=range]:hover::-moz-range-thumb { background: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+input[type=range]:disabled { opacity: 0.4; cursor: not-allowed; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
 .seed-row { display: flex; gap: 6px; }
 .seed-row input { flex: 1; min-width: 0; }
@@ -109,6 +164,7 @@ button {
 	white-space: nowrap;
 }
 button:hover { border-color: var(--muted); }
+button:active { transform: translateY(0.5px); }
 button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 button.icon { padding: 7px 9px; }
 .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--sunk); }
@@ -117,6 +173,7 @@ button.icon { padding: 7px 9px; }
 	font-size: 12px; color: var(--muted);
 }
 .seg button + button { border-left: 1px solid var(--line); }
+.seg button:hover { color: var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chips button { font-size: 12px; padding: 5px 9px; }
@@ -183,19 +240,6 @@ input[type=color] {
 kbd { font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 3px 4px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 
-/* Brand mark: the dot the project is named for, drawn in CSS so the page
-   still has no external assets. */
-.logo {
-	width: 22px; height: 22px; border-radius: 6px; flex: none;
-	background-color: var(--ink);
-	background-image: radial-gradient(var(--panel) 26%, transparent 27%),
-		radial-gradient(var(--panel) 26%, transparent 27%);
-	background-size: 11px 11px;
-	background-position: 0 0, 5.5px 5.5px;
-}
-header .brand { display: flex; align-items: center; gap: 9px; }
-header .dot { color: var(--line); }
-
 /* The preview owns its own busy and broken states, so a slow render or a 501
    from the PNG rasteriser is visible instead of an empty box. */
 .frame { position: relative; }
@@ -251,27 +295,29 @@ dialog dd { margin: 0; color: var(--muted); }
 const BODY = String.raw`
 <a class="skip" href="#view-preview">Skip to the preview</a>
 <header>
-	<span class="brand"><span class="logo" aria-hidden="true"></span><h1>polkadot</h1></span>
+	<span class="brand"><svg class="logo" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="3.1" fill="currentColor" opacity="0.45"/><circle cx="18" cy="6" r="3.1" fill="currentColor" opacity="0.45"/><circle cx="6" cy="18" r="3.1" fill="currentColor" opacity="0.45"/><circle cx="18" cy="18" r="3.1" fill="currentColor" opacity="0.45"/><circle cx="12" cy="12" r="4.4" fill="var(--brand)"/></svg><h1>polkadot</h1></span>
 	<span class="tag">every knob is a URL parameter</span>
 	<span class="grow"></span>
-	<span class="tag keys"><kbd>R</kbd> seed <kbd>M</kbd> motif <kbd>P</kbd> palette <kbd>&larr;</kbd><kbd>&rarr;</kbd> variant</span>
-	<button type="button" id="surprise">Surprise me</button>
-	<button type="button" id="keys" class="icon" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">&#9000;</button>
-	<button type="button" id="theme" class="icon" title="Toggle theme" aria-label="Toggle theme">&#9680;</button>
+	<span class="tag keys"><kbd>R</kbd><em>seed</em><kbd>M</kbd><em>motif</em><kbd>P</kbd><em>palette</em><kbd>?</kbd><em>all</em></span>
+	<span class="actions">
+		<button type="button" id="surprise" class="primary">Surprise me</button>
+		<button type="button" id="keys" class="icon" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
+		<button type="button" id="theme" class="icon" title="Toggle theme" aria-label="Toggle theme">&#9680;</button>
+	</span>
 </header>
 
 <div class="wrap">
 	<form class="panel" id="knobs" autocomplete="off" onsubmit="return false">
 		<fieldset>
-			<legend>Seed</legend>
+			<legend><span>Seed</span></legend>
 			<label>
-				<span>Seed <b id="designOut"></b></span>
-				<span class="seed-row"><input type="text" id="seed" value="hello-world"><button type="button" id="dice" class="icon" title="Random seed" aria-label="Random seed">&#10539;</button></span>
+				<span>String <b id="designOut"></b></span>
+				<span class="seed-row"><input type="text" id="seed" value="hello-world"><button type="button" id="dice" class="icon" title="Random seed" aria-label="Random seed">&#8635;</button></span>
 			</label>
 		</fieldset>
 
 		<fieldset>
-			<legend>Type</legend>
+			<legend><span>Type</span></legend>
 			<label><span>Title</span><input type="text" id="title" value="Hello World"></label>
 			<label><span>Subtitle</span><input type="text" id="subtitle" value=""></label>
 			<label><span>Alt text</span><input type="text" id="label" value="" placeholder="defaults to the title"></label>
@@ -295,11 +341,9 @@ const BODY = String.raw`
 		</fieldset>
 
 		<fieldset>
-			<legend>Design</legend>
-			<div class="row">
-				<label><span>Motif</span><select id="motif"></select></label>
-				<label><span>Palette</span><select id="palette"></select></label>
-			</div>
+			<legend><span>Design</span></legend>
+			<label><span>Motif</span><select id="motif"></select></label>
+			<label><span>Palette</span><select id="palette"></select></label>
 			<label><span>Variant</span><span class="seg" id="variant" role="group" aria-label="Variant"></span></label>
 			<label><span>Tilt <b id="tiltOut">auto</b></span><input type="range" id="tilt" min="-30" max="30" step="1" value="0"></label>
 			<div class="chips">
@@ -309,7 +353,7 @@ const BODY = String.raw`
 		</fieldset>
 
 		<fieldset>
-			<legend>Canvas</legend>
+			<legend><span>Canvas</span></legend>
 			<label><span>Width <b id="wOut">600</b></span><input type="range" id="w" min="64" max="2048" step="8" value="600"></label>
 			<label><span>Height <b id="hOut">600</b></span><input type="range" id="h" min="64" max="2048" step="8" value="600"></label>
 			<div class="chips">
@@ -320,7 +364,7 @@ const BODY = String.raw`
 		</fieldset>
 
 		<fieldset>
-			<legend>Output</legend>
+			<legend><span>Output</span></legend>
 			<div class="row">
 				<label><span>Format</span><span class="seg" id="format" role="group" aria-label="Format"></span></label>
 				<label><span>Scale <b id="scaleOut">1&times;</b></span><input type="range" id="scale" min="1" max="4" step="1" value="1"></label>
