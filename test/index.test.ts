@@ -502,9 +502,17 @@ describe('playgroundHtml', () => {
 		expect(html).toContain(`"variants":${VARIANTS}`);
 	});
 
-	test('is self-contained: no external asset ever loads', () => {
-		expect(html).not.toMatch(/(src|href)="(https?:)?\/\//);
+	test('loads its type from Google Fonts, and nothing else off-site', () => {
+		const external = html.match(/(?:src|href)="(?:https?:)?\/\/[^"]+/g) ?? [];
+		expect(external.length).toBeGreaterThan(0);
+		for (const url of external) expect(url).toMatch(/fonts\.(googleapis|gstatic)\.com/);
 		expect(html.startsWith('<!doctype html>')).toBe(true);
+	});
+
+	test('webfonts: false leaves no external asset at all', () => {
+		const offline = playgroundHtml({ webfonts: false });
+		expect(offline).not.toMatch(/(src|href)="(?:https?:)?\/\//);
+		expect(offline).toContain('Inter Tight');
 	});
 
 	test('stays ASCII, because the bundler escapes raw templates', () => {

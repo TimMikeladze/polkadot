@@ -48,7 +48,7 @@ const art = renderSvg({
 	palette: 'cobalt',
 	variant: 2, // 0-3, wraps
 	rotation: -6, // degrees; `rotate: false` flattens instead
-	font: 'mono', // serif | sans | mono | display | rounded | slab
+	font: 'mono', // serif | sans | mono | display | rounded | slab | grotesk | humanist
 	align: 'center',
 	scrim: 0.7, // fade the field up behind the type so it stays legible
 });
@@ -177,7 +177,7 @@ open http://localhost:3000/
 
 It is deliberately boring under the hood: every preview is an `<img>` on the same immutable-cached URL the API serves, so revisiting a knob position is a browser cache hit. Knob changes are coalesced to one update per ~16ms, the main preview is decoded off-thread and swapped in only once ready, and contact sheets fill lazily, reuse their tiles, and always request small SVGs — a 48-tile sheet costs less than one full-size PNG.
 
-Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize })`, which returns a self-contained HTML string with no external assets. `createHandler({ playground: false })` turns it off.
+Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize })`, which returns a single HTML string with no build step. Its own type — Inter Tight, Instrument Serif, and JetBrains Mono — comes from Google Fonts with `display=swap`, so the page is readable on system stacks before the fonts land and stays readable if they never do. That link is the page's only external asset; `webfonts: false` drops it, on `playgroundHtml` or on `createHandler`, leaving a page that loads nothing off-site. `createHandler({ playground: false })` turns the page off entirely.
 
 #### Deploying to Vercel
 
@@ -239,11 +239,13 @@ Colours land in SVG attribute values, so quotes and angle brackets are stripped 
 ```typescript
 import { FONTS, FONT_NAMES } from 'polkadot';
 
-FONT_NAMES; // serif, sans, mono, display, rounded, slab
-FONTS.mono; // { title, subtitle } — plain CSS font stacks
+FONT_NAMES; // serif, sans, mono, display, rounded, slab, grotesk, humanist
+FONTS.mono; // { title, subtitle, advance } — plain CSS font stacks
 ```
 
-Every stack is built from fonts that ship with common desktops: an SVG is rendered by whoever opens it, and the PNG rasteriser only sees installed system fonts, so there is no web font to load. Pass `titleFont` / `subtitleFont` to override a stack outright.
+Eight pairings: an old-style book serif (`serif`, the default), a neutral grotesque (`sans`), a code face (`mono`), a high-contrast didone (`display`), a soft geometric (`rounded`), an editorial slab (`slab`), a wide poster geometric (`grotesk`), and a calligraphic humanist sans (`humanist`).
+
+Every stack is built from fonts that ship with common desktops: an SVG is rendered by whoever opens it, and the PNG rasteriser only sees installed system fonts, so there is no web font to load. Each one ends with the Liberation/DejaVu names a Linux server actually has and then a generic family, so a missing face degrades to the right *shape* rather than to the renderer's single default. `advance` is the face's average glyph width in ems — a string renderer cannot measure text, so line breaking counts with that instead of one shared guess, and a mono or geometric title wraps before it runs past the edge. Pass `titleFont` / `subtitleFont` to override a stack outright.
 
 A busy motif can swallow a title — `beam` and `bands` fill most of the canvas with the mark colour. `scrim` fades the field colour up behind the type block to fix that, either as a switch (`scrim: true`, 0.85) or a strength (`scrim: 0.6`).
 

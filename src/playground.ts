@@ -1,5 +1,5 @@
 import { MOTIFS, VARIANTS } from './design.ts';
-import { FONT_NAMES } from './fonts.ts';
+import { FONT_NAMES, FONTS } from './fonts.ts';
 import { PALETTES, type Palette } from './palettes.ts';
 
 export type PlaygroundOptions = {
@@ -9,6 +9,12 @@ export type PlaygroundOptions = {
 	palettes?: Palette[];
 	/** Largest accepted `w`/`h`. Caps the size sliders. */
 	maxSize?: number;
+	/**
+	 * Load the page's own type from Google Fonts. Default true. Turn it off for
+	 * an offline or air-gapped mount: the page then has no external asset at
+	 * all, and falls back to the system stacks behind each family.
+	 */
+	webfonts?: boolean;
 };
 
 /** Canvas sizes worth one click, in the order a designer reaches for them. */
@@ -36,6 +42,9 @@ const STYLE = String.raw`
 	--shadow: 0 1px 2px rgba(20, 18, 24, 0.05), 0 8px 24px -16px rgba(20, 18, 24, 0.3);
 	--brand: #c0563e;
 	--radius: 12px;
+	--ui: 'Inter Tight', 'Inter', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+	--mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--wordmark: 'Instrument Serif', 'Iowan Old Style', Palatino, Georgia, serif;
 }
 :root[data-theme="dark"] {
 	color-scheme: dark;
@@ -70,8 +79,10 @@ body {
 	margin: 0;
 	background: var(--bg);
 	color: var(--ink);
-	font: 14px/1.5 ui-sans-serif, -apple-system, "Helvetica Neue", Arial, sans-serif;
+	font: 400 14px/1.5 var(--ui);
+	font-feature-settings: 'cv05' 1, 'ss03' 1;
 	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 }
 header {
 	display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -82,7 +93,7 @@ header {
 }
 header .brand { display: flex; align-items: center; gap: 10px; margin-right: 2px; }
 header .logo { display: block; width: 26px; height: 26px; flex: none; }
-header h1 { font: 650 16px/1 inherit; margin: 0; letter-spacing: -0.02em; }
+header h1 { font: 400 23px/1 var(--wordmark); margin: 0; letter-spacing: -0.005em; }
 /* A hairline instead of a bullet: the tagline is an aside, not a second title. */
 header .tag {
 	color: var(--muted); font-size: 12px; padding-left: 11px;
@@ -108,15 +119,15 @@ legend { padding: 0; }
 legend > span {
 	display: flex; align-items: center; gap: 10px;
 	padding: 12px 0 2px; color: var(--muted);
-	font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+	font-size: 11px; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase;
 }
 legend > span::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 label { display: block; margin: 12px 0 0; }
-label > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--muted); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 5px; }
+label > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--muted); font-size: 11px; font-weight: 550; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
 /* Live values are read while dragging, so they get monospace digits and a chip
    of their own rather than blending into the label. */
 label > span b {
-	color: var(--ink); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+	color: var(--ink); font: 500 11px/1.4 var(--mono);
 	font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none;
 	background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px;
 }
@@ -228,7 +239,7 @@ input[type=color] {
 .out code {
 	flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; background: var(--sunk);
 	border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
-	font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+	font: 400 12px/1.4 var(--mono);
 }
 .out .chips { margin-top: 0; }
 .toast {
@@ -237,7 +248,7 @@ input[type=color] {
 	font-size: 13px; opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s;
 }
 .toast[data-show="true"] { opacity: 1; transform: translateX(-50%) translateY(0); }
-kbd { font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 3px 4px; color: var(--muted); }
+kbd { font: 500 11px/1 var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 3px 4px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 
 /* The preview owns its own busy and broken states, so a slow render or a 501
@@ -261,20 +272,20 @@ kbd { font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; border: 1px s
 
 /* API reference tab */
 .docs { display: flex; flex-direction: column; gap: 22px; }
-.docs h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.docs h2 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 650; }
 .docs p { margin: 0 0 12px; color: var(--muted); max-width: 68ch; }
 .docs pre {
 	margin: 0; overflow-x: auto; background: var(--sunk); border: 1px solid var(--line);
 	border-radius: 8px; padding: 10px 12px;
-	font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+	font: 400 12px/1.7 var(--mono);
 }
 .docs table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .docs th, .docs td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .docs th { color: var(--muted); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 600; }
-.docs td:first-child { white-space: nowrap; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.docs td:first-child { white-space: nowrap; font: 500 12px/1.5 var(--mono); }
 .docs .scroll { overflow-x: auto; }
 .docs .tokens { display: flex; flex-wrap: wrap; gap: 6px; }
-.docs .tokens code { background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.docs .tokens code { background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; font: 400 12px/1.5 var(--mono); }
 
 /* Shortcut sheet */
 dialog {
@@ -909,7 +920,13 @@ function loadHash() {
 
 	const fontSelect = $('font');
 	fontSelect.append(new Option('default (serif)', ''));
-	for (const font of CONFIG.fonts) fontSelect.append(new Option(font, font));
+	for (const font of CONFIG.fonts) {
+		const option = new Option(font, font);
+		// Preview the pairing in the menu: the name of a face says much less
+		// than the face itself.
+		if (CONFIG.fontStacks[font]) option.style.fontFamily = CONFIG.fontStacks[font];
+		fontSelect.append(option);
+	}
 
 	for (const count of [6, 12, 24, 48]) $('galleryCount').append(new Option(count + ' tiles', String(count)));
 	for (const slider of [$('w'), $('h')]) slider.max = String(CONFIG.maxSize);
@@ -1130,6 +1147,15 @@ apply();
  */
 export function playgroundHtml(options: PlaygroundOptions = {}): string {
 	const base = (options.basePath ?? '').replace(/\/+$/, '');
+	// `display=swap`, so the page is readable on the system stacks before the
+	// web fonts land — and stays readable if they never do.
+	const fonts =
+		options.webfonts === false
+			? ''
+			: `<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap">
+`;
 	const palettes = options.palettes ?? PALETTES;
 	const config = JSON.stringify({
 		base,
@@ -1143,6 +1169,9 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 			dark: entry.dark === true,
 		})),
 		fonts: FONT_NAMES,
+		// The title stack of each pairing, so the font menu can show every option
+		// set in its own face.
+		fontStacks: Object.fromEntries(FONT_NAMES.map((name) => [name, FONTS[name]?.title ?? ''])),
 		variants: VARIANTS,
 		presets: PRESETS,
 	})
@@ -1156,6 +1185,7 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>polkadot playground</title>
+${fonts}
 <style>${STYLE}</style>
 </head>
 <body>

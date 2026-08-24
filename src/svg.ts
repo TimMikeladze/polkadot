@@ -148,8 +148,10 @@ function renderType(
 	const titleSize = base * 0.09;
 	const subtitleSize = base * 0.045;
 	const titleLeading = titleSize * 1.06;
-	const charsPerLine = Math.max(8, Math.floor((width - pad * 2) / (titleSize * 0.5)));
 	const fonts = fontPair(options.font);
+	// Break on the chosen face's own advance, so a mono or geometric title
+	// wraps before it runs off the canvas.
+	const charsPerLine = Math.max(8, Math.floor((width - pad * 2) / (titleSize * fonts.advance)));
 
 	const align = options.align ?? 'left';
 	const valign = options.valign ?? 'bottom';

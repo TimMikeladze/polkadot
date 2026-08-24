@@ -16,6 +16,11 @@ export type HandlerOptions = {
 	cacheControl?: string;
 	/** Serve the knob-driven HTML playground at the mount root. Default true. */
 	playground?: boolean;
+	/**
+	 * Let the playground load its own type from Google Fonts. Default true;
+	 * `false` keeps the page free of every external asset.
+	 */
+	webfonts?: boolean;
 };
 
 const DEFAULT_MAX_SIZE = 2048;
