@@ -19,6 +19,16 @@ export const MOTIFS = [
 	'pebbles',
 	'chevron',
 	'eclipse',
+	'checker',
+	'quarters',
+	'moon',
+	'ripple',
+	'confetti',
+	'mesa',
+	'pillars',
+	'nodes',
+	'spokes',
+	'tiles',
 ] as const;
 
 export type Motif = (typeof MOTIFS)[number];

@@ -255,6 +255,176 @@ export function renderMotif(motif: Motif, palette: Palette, variant: number, see
 			break;
 		}
 
+		case 'checker': {
+			const size = 3 + (variant % 3);
+			const cell = 120 / size;
+			// One cell is the spark, picked from the seed rather than fixed, so
+			// two seeds on the same board still differ.
+			const accent = Math.min(size * size - 1, Math.floor(at(1) * size * size));
+			for (let index = 0; index < size * size; index++) {
+				const column = index % size;
+				const row = Math.floor(index / size);
+				if ((column + row) % 2 === 1 && index !== accent) continue;
+				parts.push(
+					`<rect x="${round(column * cell)}" y="${round(row * cell)}" width="${round(cell)}" height="${round(cell)}" fill="${index === accent ? spark : (column + row) % 4 === 0 ? shade : mark}"/>`,
+				);
+			}
+			break;
+		}
+
+		case 'quarters': {
+			// Four quarter-circle fans, each turned a different way — the shape a
+			// Bauhaus tile set is built from.
+			const turns = [0, 90, 180, 270];
+			for (let index = 0; index < 4; index++) {
+				const column = index % 2;
+				const row = Math.floor(index / 2);
+				const x = column * 60;
+				const y = row * 60;
+				const turn = turns[(index + variant) % 4] as number;
+				parts.push(
+					`<g transform="translate(${round(x)} ${round(y)}) rotate(${round(turn)} 30 30)">` +
+						`<path d="M 0 60 L 0 0 L 60 0 A 60 60 0 0 1 0 60 Z" fill="${index % 3 === 0 ? shade : mark}"/>` +
+						`</g>`,
+				);
+			}
+			parts.push(`<circle cx="60" cy="60" r="${round(9 + variant * 2)}" fill="${spark}"/>`);
+			break;
+		}
+
+		case 'moon': {
+			// A crescent cut by overlaying the field colour, so it works on every
+			// palette without a mask.
+			const offset = 14 + variant * 6;
+			parts.push(
+				`<circle cx="58" cy="58" r="40" fill="${mark}"/>`,
+				`<circle cx="${round(58 + offset)}" cy="${round(52 - variant * 2)}" r="34" fill="${field}"/>`,
+				`<circle cx="${round(30 - variant * 2)}" cy="96" r="7" fill="${spark}"/>`,
+				`<circle cx="96" cy="26" r="4" fill="${shade}"/>`,
+			);
+			break;
+		}
+
+		case 'ripple': {
+			const count = 5 + variant;
+			const cx = 60 + (variant - 1.5) * 10;
+			const cy = 62;
+			for (let index = count; index > 0; index--) {
+				parts.push(
+					`<circle cx="${round(cx)}" cy="${round(cy)}" r="${round(index * (54 / count))}" fill="none" stroke="${index % 2 === 0 ? mark : shade}" stroke-width="${round(2 + at(index) * 3)}"/>`,
+				);
+			}
+			parts.push(`<circle cx="${round(cx)}" cy="${round(cy)}" r="6" fill="${spark}"/>`);
+			break;
+		}
+
+		case 'confetti': {
+			const count = 22 + variant * 6;
+			for (let index = 0; index < count; index++) {
+				// Two different taps into the seed per axis, so a long run of
+				// confetti does not fall into a visible diagonal.
+				const x = 4 + ((at(index) + at(index + 9) * 0.6) % 1) * 108;
+				const y = 4 + ((at(index + 6) + at(index + 3) * 0.7) % 1) * 108;
+				const long = 9 + at(index + 2) * 14;
+				parts.push(
+					`<rect x="${round(x)}" y="${round(y)}" width="${round(long)}" height="${round(4.5 + at(index + 4) * 2.5)}" rx="2.2" transform="rotate(${round(at(index + 3) * 360)} ${round(x)} ${round(y)})" fill="${index % 5 === 0 ? spark : index % 2 === 0 ? mark : shade}"/>`,
+				);
+			}
+			break;
+		}
+
+		case 'mesa': {
+			// Flat-topped terraces, back to front, each one lower and wider.
+			const steps = 3 + variant;
+			for (let index = 0; index < steps; index++) {
+				const inset = index * (46 / steps);
+				const top = 30 + index * (68 / steps);
+				parts.push(
+					`<path d="M ${round(inset)} 120 L ${round(inset)} ${round(top + 14)} L ${round(inset + 18)} ${round(top)} L ${round(120 - inset - 18)} ${round(top)} L ${round(120 - inset)} ${round(top + 14)} L ${round(120 - inset)} 120 Z" fill="${index % 2 === 0 ? mark : shade}"/>`,
+				);
+			}
+			parts.push(`<circle cx="${round(84 - variant * 6)}" cy="24" r="10" fill="${spark}"/>`);
+			break;
+		}
+
+		case 'pillars': {
+			const count = 5 + variant;
+			const slot = 120 / count;
+			for (let index = 0; index < count; index++) {
+				const height = 30 + at(index) * 74;
+				parts.push(
+					`<rect x="${round(index * slot + slot * 0.16)}" y="${round(120 - height)}" width="${round(slot * 0.68)}" height="${round(height)}" rx="${round(slot * 0.34)}" fill="${index % 3 === 1 ? shade : mark}"/>`,
+				);
+			}
+			parts.push(
+				`<circle cx="${round(slot * 0.5 + Math.floor(at(4) * count) * slot)}" cy="20" r="8" fill="${spark}"/>`,
+			);
+			break;
+		}
+
+		case 'nodes': {
+			// A constellation: points from the seed, joined in order, so the graph
+			// is stable for a seed but different for the next one.
+			const count = 5 + variant;
+			const points: Array<[number, number]> = [];
+			for (let index = 0; index < count; index++) {
+				points.push([16 + at(index) * 88, 16 + at(index + 7) * 88]);
+			}
+			for (let index = 1; index < points.length; index++) {
+				const from = points[index - 1] as [number, number];
+				const to = points[index] as [number, number];
+				parts.push(
+					`<line x1="${round(from[0])}" y1="${round(from[1])}" x2="${round(to[0])}" y2="${round(to[1])}" stroke="${shade}" stroke-width="2" stroke-linecap="round"/>`,
+				);
+			}
+			points.forEach(function (point, index) {
+				parts.push(
+					`<circle cx="${round(point[0])}" cy="${round(point[1])}" r="${round(4 + at(index + 2) * 5)}" fill="${index === 0 ? spark : mark}"/>`,
+				);
+			});
+			break;
+		}
+
+		case 'spokes': {
+			const count = 10 + variant * 2;
+			for (let index = 0; index < count; index++) {
+				const angle = ((Math.PI * 2) / count) * index;
+				parts.push(
+					`<line x1="60" y1="60" x2="${round(60 + Math.cos(angle) * 62)}" y2="${round(60 + Math.sin(angle) * 62)}" stroke="${index % 2 === 0 ? mark : shade}" stroke-width="${round(4 + at(index) * 5)}" stroke-linecap="round"/>`,
+				);
+			}
+			parts.push(
+				`<circle cx="60" cy="60" r="${round(14 + variant * 3)}" fill="${field}"/>`,
+				`<circle cx="60" cy="60" r="${round(7 + variant * 1.5)}" fill="${spark}"/>`,
+			);
+			break;
+		}
+
+		case 'tiles': {
+			// Triangles on a grid, each flipped one of four ways by the seed.
+			const size = 3 + (variant % 3);
+			const cell = 120 / size;
+			for (let index = 0; index < size * size; index++) {
+				const column = index % size;
+				const row = Math.floor(index / size);
+				const x = column * cell;
+				const y = row * cell;
+				const corner = Math.floor(at(index) * 4);
+				const points =
+					corner === 0
+						? `${round(x)},${round(y)} ${round(x + cell)},${round(y)} ${round(x)},${round(y + cell)}`
+						: corner === 1
+							? `${round(x + cell)},${round(y)} ${round(x + cell)},${round(y + cell)} ${round(x)},${round(y)}`
+							: corner === 2
+								? `${round(x + cell)},${round(y + cell)} ${round(x)},${round(y + cell)} ${round(x + cell)},${round(y)}`
+								: `${round(x)},${round(y + cell)} ${round(x)},${round(y)} ${round(x + cell)},${round(y + cell)}`;
+				parts.push(
+					`<polygon points="${points}" fill="${index === Math.floor(at(5) * size * size) ? spark : index % 3 === 0 ? shade : mark}"/>`,
+				);
+			}
+			break;
+		}
+
 		default: {
 			const offset = 10 + variant * 5;
 			parts.push(

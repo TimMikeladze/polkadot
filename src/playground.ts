@@ -242,7 +242,9 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 
 .out {
 	display: flex; flex-direction: column; gap: 8px; padding: 14px 16px;
-	position: sticky; bottom: 14px; z-index: 4;
+	/* The URL is the product, so it sits above the picture and stays there
+	   while the sheets scroll under it. */
+	position: sticky; top: 60px; z-index: 4;
 	background: color-mix(in srgb, var(--panel) 92%, transparent);
 	backdrop-filter: saturate(180%) blur(12px);
 }
@@ -402,6 +404,17 @@ const BODY = String.raw`
 	</form>
 
 	<div class="stage">
+		<div class="panel out">
+			<div class="url"><code id="urlOut"></code><button type="button" id="copyUrl" class="primary">Copy</button></div>
+			<div class="chips">
+				<button type="button" data-copy="absolute">Absolute URL</button>
+				<button type="button" data-copy="markdown">Markdown</button>
+				<button type="button" data-copy="html">&lt;img&gt;</button>
+				<button type="button" data-copy="css">CSS</button>
+				<button type="button" data-copy="source">SVG source</button>
+				<button type="button" data-copy="datauri">Data URI</button>
+			</div>
+
 		<div class="panel view" id="view-preview" aria-labelledby="h-preview">
 			<h2 class="section" id="h-preview">Preview</h2>
 			<div class="frame" id="frame" data-backdrop="checker" data-state="loading"><img id="preview" alt="preview"><div class="error" role="alert"><b id="errorTitle">That URL did not render</b><span id="errorBody"></span></div></div>
@@ -445,16 +458,6 @@ const BODY = String.raw`
 
 		<div class="panel view docs" id="view-docs" aria-labelledby="h-docs"></div>
 
-		<div class="panel out">
-			<div class="url"><code id="urlOut"></code><button type="button" id="copyUrl" class="primary">Copy</button></div>
-			<div class="chips">
-				<button type="button" data-copy="absolute">Absolute URL</button>
-				<button type="button" data-copy="markdown">Markdown</button>
-				<button type="button" data-copy="html">&lt;img&gt;</button>
-				<button type="button" data-copy="css">CSS</button>
-				<button type="button" data-copy="source">SVG source</button>
-				<button type="button" data-copy="datauri">Data URI</button>
-			</div>
 		</div>
 	</div>
 </div>

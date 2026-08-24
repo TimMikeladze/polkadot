@@ -6,7 +6,7 @@ Hosted at **[polkadot.sh](https://polkadot.sh)** — try `https://polkadot.sh/al
 
 Use it inline as a library, or link out to a URL and let the endpoint render it.
 
-- **12 palettes × 18 motifs × 4 variants × 9 tilts** — 7,776 combinations, 216 distinct palette/motif buckets at thumbnail size
+- **12 palettes × 28 motifs × 4 variants × 9 tilts** — 12,096 combinations, 336 distinct palette/motif buckets at thumbnail size
 - **Knobs, not guesswork** — force the motif, palette, variant, tilt, type pairing, alignment, and a legibility scrim, from code or from the URL
 - **A playground** — the server root is a knob-driven page with contact sheets for every motif, palette, and variant
 - **SVG** — pure string output, synchronous, no dependencies
@@ -264,7 +264,7 @@ seedColors('user-7'); // { background, text }
 
 A 32-bit FNV-1a hash of the seed, sliced into separate bit ranges to pick a palette, a motif, a variant, and a rotation. Distinct ranges mean the choices are uncorrelated. Motifs that need continuous variation (dot radii, wave amplitudes) draw from a seeded xorshift32 stream. Everything is drawn into a 120×120 viewBox and scaled by the outer `<svg>`, so non-square output crops rather than stretches.
 
-Collision note: at 216 perceptual buckets there is a ~50% chance of two lookalikes by the 17th seed. For catalogs beyond a few hundred items, treat this as a fallback rather than a primary identity system.
+Collision note: at 336 perceptual buckets there is a ~50% chance of two lookalikes by the 22nd seed. For catalogs beyond a few hundred items, treat this as a fallback rather than a primary identity system.
 
 ## Contributing
 
