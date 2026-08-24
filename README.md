@@ -1,6 +1,8 @@
-# placeholder-images
+# polkadot
 
 Deterministic generative placeholder images from a seed string. Zero dependencies, no network, no stored assets — the same seed always produces the same image, on every device and in every runtime.
+
+Hosted at **[polkadot.sh](https://polkadot.sh)** — try `https://polkadot.sh/album-42.svg?title=Lahai`.
 
 Use it inline as a library, or link out to a URL and let the endpoint render it.
 
@@ -14,7 +16,7 @@ Use it inline as a library, or link out to a URL and let the endpoint render it.
 ## Installation
 
 ```bash
-bun add placeholder-images
+bun add polkadot
 # optional, only for PNG output
 bun add @resvg/resvg-js
 ```
@@ -24,7 +26,7 @@ bun add @resvg/resvg-js
 ### SVG
 
 ```typescript
-import { renderSvg, renderDataUri } from 'placeholder-images';
+import { renderSvg, renderDataUri } from 'polkadot';
 
 const svg = renderSvg({ seed: 'album-42', width: 600 });
 
@@ -81,7 +83,7 @@ In React:
 ### PNG
 
 ```typescript
-import { renderPng } from 'placeholder-images';
+import { renderPng } from 'polkadot';
 
 const png = await renderPng({
 	seed: 'album-42',
@@ -97,7 +99,7 @@ Requires `@resvg/resvg-js`. Because it rasterises the exact SVG the library prod
 ### HTTP endpoint
 
 ```bash
-bunx placeholder-images --port 3000
+bunx polkadot --port 3000
 ```
 
 ```
@@ -108,7 +110,7 @@ http://localhost:3000/album-42.png?w=1200&h=630&scale=2
 Mount it inside an existing app:
 
 ```typescript
-import { createHandler } from 'placeholder-images';
+import { createHandler } from 'polkadot';
 
 const handler = createHandler({ basePath: '/img', maxSize: 2048 });
 
@@ -122,7 +124,7 @@ export const GET = handler;
 Or programmatically with Bun:
 
 ```typescript
-import { serve } from 'placeholder-images/server';
+import { serve } from 'polkadot/server';
 
 const server = serve({ port: 3000, basePath: '/img' });
 console.log(server.url);
@@ -161,7 +163,7 @@ server.stop();
 Open the server root in a browser and the same endpoint serves a knob-driven page instead of JSON:
 
 ```bash
-bunx placeholder-images --port 3000
+bunx polkadot --port 3000
 open http://localhost:3000/
 ```
 
@@ -169,11 +171,24 @@ open http://localhost:3000/
 - **Contact sheets**: tabs that render the current seed across every motif, every palette, and all four variants, plus a gallery of random seeds — click any tile to adopt it
 - **Copy as**: URL, absolute URL, Markdown, `<img>`, CSS `background-image`, raw SVG source, or a `data:` URI, and a one-click download
 - **Shareable state**: the knobs live in the page's hash, so a pasted link reopens the exact design
-- **Keyboard**: `R` reseeds, `M` and `P` jump to a random motif or palette, `←`/`→` walk the variants
+- **API reference**: an in-page tab listing every parameter, motif, palette, and font, built from the same config the server validates against
+- **Honest states**: the preview shows when it is rendering, and says what went wrong when a URL does not render — a `501` from a host without the PNG rasteriser reads as exactly that
+- **Keyboard**: `R` reseeds, `M` and `P` jump to a random motif or palette, `S` surprises, `C` copies, `D` downloads, `←`/`→` walk the variants, `1`–`6` switch tabs, and `?` opens the shortcut sheet
 
 It is deliberately boring under the hood: every preview is an `<img>` on the same immutable-cached URL the API serves, so revisiting a knob position is a browser cache hit. Knob changes are coalesced to one update per ~16ms, the main preview is decoded off-thread and swapped in only once ready, and contact sheets fill lazily, reuse their tiles, and always request small SVGs — a 48-tile sheet costs less than one full-size PNG.
 
 Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize })`, which returns a self-contained HTML string with no external assets. `createHandler({ playground: false })` turns it off.
+
+#### Deploying to Vercel
+
+The repo deploys itself: `vercel.json` rewrites every path to `api/index.ts`, which mounts `createHandler()` at the root. `bun run build` produces the `dist/` the function imports, so the deployed code is the code the package publishes.
+
+```bash
+vercel link
+vercel --prod
+```
+
+PNG needs the native rasteriser in the function bundle, which is why `api/index.ts` imports `@resvg/resvg-js` by name — `png.ts` loads it through an indirect specifier, and a file tracer cannot see through that.
 
 Because output depends only on the URL and the configured palettes, responses carry a strong `ETag` and answer `304` to a matching `If-None-Match`, alongside a one-year immutable `Cache-Control`. `HEAD` is supported; anything other than `GET`/`HEAD` gets a `405`.
 
@@ -182,7 +197,7 @@ Sizes are clamped to `maxSize` (default 2048) and unknown motifs are ignored, so
 ### Motifs and palettes
 
 ```typescript
-import { MOTIFS, PALETTES, design } from 'placeholder-images';
+import { MOTIFS, PALETTES, design } from 'polkadot';
 
 MOTIFS;
 // rings, sun, split, grid, waves, arch, bands, orbit, prism,
@@ -222,7 +237,7 @@ Colours land in SVG attribute values, so quotes and angle brackets are stripped 
 ### Type
 
 ```typescript
-import { FONTS, FONT_NAMES } from 'placeholder-images';
+import { FONTS, FONT_NAMES } from 'polkadot';
 
 FONT_NAMES; // serif, sans, mono, display, rounded, slab
 FONTS.mono; // { title, subtitle } — plain CSS font stacks
@@ -237,7 +252,7 @@ Placement is a block, not a pair of loose lines: `align` and `valign` set which 
 ### Avatars
 
 ```typescript
-import { initials, seedColors } from 'placeholder-images';
+import { initials, seedColors } from 'polkadot';
 
 initials('Sampha Sisay'); // "SS"
 seedColors('user-7'); // { background, text }

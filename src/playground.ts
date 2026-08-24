@@ -182,15 +182,81 @@ input[type=color] {
 .toast[data-show="true"] { opacity: 1; transform: translateX(-50%) translateY(0); }
 kbd { font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 3px 4px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+/* Brand mark: the dot the project is named for, drawn in CSS so the page
+   still has no external assets. */
+.logo {
+	width: 22px; height: 22px; border-radius: 6px; flex: none;
+	background-color: var(--ink);
+	background-image: radial-gradient(var(--panel) 26%, transparent 27%),
+		radial-gradient(var(--panel) 26%, transparent 27%);
+	background-size: 11px 11px;
+	background-position: 0 0, 5.5px 5.5px;
+}
+header .brand { display: flex; align-items: center; gap: 9px; }
+header .dot { color: var(--line); }
+
+/* The preview owns its own busy and broken states, so a slow render or a 501
+   from the PNG rasteriser is visible instead of an empty box. */
+.frame { position: relative; }
+.frame[data-state="loading"]::after {
+	content: ""; position: absolute; inset: auto 10px 10px auto;
+	width: 12px; height: 12px; border-radius: 50%;
+	border: 2px solid var(--muted); border-top-color: transparent;
+	animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.frame[data-state="error"] #preview { display: none; }
+.error {
+	display: none; max-width: 320px; text-align: center; color: var(--muted); font-size: 13px;
+	padding: 16px; border: 1px dashed var(--line); border-radius: 10px; background: var(--panel);
+}
+.frame[data-state="error"] .error { display: block; }
+.error b { display: block; color: var(--ink); margin-bottom: 4px; }
+@media (prefers-reduced-motion: reduce) { .frame[data-state="loading"]::after { animation: none; } }
+
+/* API reference tab */
+.docs { display: flex; flex-direction: column; gap: 22px; }
+.docs h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.docs p { margin: 0 0 12px; color: var(--muted); max-width: 68ch; }
+.docs pre {
+	margin: 0; overflow-x: auto; background: var(--sunk); border: 1px solid var(--line);
+	border-radius: 8px; padding: 10px 12px;
+	font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.docs table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docs th, .docs td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.docs th { color: var(--muted); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 600; }
+.docs td:first-child { white-space: nowrap; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.docs .scroll { overflow-x: auto; }
+.docs .tokens { display: flex; flex-wrap: wrap; gap: 6px; }
+.docs .tokens code { background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Shortcut sheet */
+dialog {
+	border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
+	color: var(--ink); padding: 18px 20px; box-shadow: var(--shadow); max-width: 340px; width: calc(100% - 32px);
+}
+dialog::backdrop { background: rgba(10, 10, 14, 0.45); }
+dialog h2 { margin: 0 0 12px; font-size: 14px; }
+dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 0; font-size: 13px; align-items: center; }
+dialog dd { margin: 0; color: var(--muted); }
+.skip {
+	position: absolute; left: -9999px; top: 0; background: var(--accent); color: var(--on-accent);
+	padding: 8px 12px; border-radius: 0 0 8px 0; z-index: 10;
+}
+.skip:focus { left: 0; }
 `;
 
 const BODY = String.raw`
+<a class="skip" href="#view-preview">Skip to the preview</a>
 <header>
-	<h1>placeholder-images</h1>
+	<span class="brand"><span class="logo" aria-hidden="true"></span><h1>polkadot</h1></span>
 	<span class="tag">every knob is a URL parameter</span>
 	<span class="grow"></span>
 	<span class="tag keys"><kbd>R</kbd> seed <kbd>M</kbd> motif <kbd>P</kbd> palette <kbd>&larr;</kbd><kbd>&rarr;</kbd> variant</span>
 	<button type="button" id="surprise">Surprise me</button>
+	<button type="button" id="keys" class="icon" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">&#9000;</button>
 	<button type="button" id="theme" class="icon" title="Toggle theme" aria-label="Toggle theme">&#9680;</button>
 </header>
 
@@ -272,7 +338,7 @@ const BODY = String.raw`
 		<div class="panel"><div class="tabs" id="tabs" role="tablist"></div></div>
 
 		<div class="panel view" id="view-preview" role="tabpanel" aria-label="Preview">
-			<div class="frame" id="frame" data-backdrop="checker"><img id="preview" alt="preview"></div>
+			<div class="frame" id="frame" data-backdrop="checker" data-state="loading"><img id="preview" alt="preview"><div class="error" role="alert"><b id="errorTitle">That URL did not render</b><span id="errorBody"></span></div></div>
 			<div class="meta">
 				<span>Rendered <b id="metaSize">&mdash;</b></span>
 				<span>Motif <b id="metaMotif">&mdash;</b></span>
@@ -306,6 +372,8 @@ const BODY = String.raw`
 			<div class="grid" id="variantGrid"></div>
 		</div>
 
+		<div class="panel view docs" id="view-docs" role="tabpanel" aria-label="API" hidden></div>
+
 		<div class="panel out">
 			<div class="url"><code id="urlOut"></code><button type="button" id="copyUrl" class="primary">Copy</button></div>
 			<div class="chips">
@@ -320,6 +388,21 @@ const BODY = String.raw`
 	</div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<dialog id="keysDialog">
+	<h2>Keyboard shortcuts</h2>
+	<dl>
+		<dt><kbd>R</kbd></dt><dd>Random seed</dd>
+		<dt><kbd>M</kbd></dt><dd>Random motif</dd>
+		<dt><kbd>P</kbd></dt><dd>Random palette</dd>
+		<dt><kbd>S</kbd></dt><dd>Surprise me</dd>
+		<dt><kbd>C</kbd></dt><dd>Copy the URL</dd>
+		<dt><kbd>D</kbd></dt><dd>Download</dd>
+		<dt><kbd>&larr;</kbd><kbd>&rarr;</kbd></dt><dd>Step the variant</dd>
+		<dt><kbd>1</kbd>&ndash;<kbd>6</kbd></dt><dd>Switch tab</dd>
+		<dt><kbd>?</kbd></dt><dd>This sheet</dd>
+	</dl>
+	<div class="chips"><button type="button" id="keysClose" class="primary">Close</button></div>
+</dialog>
 `;
 
 /**
@@ -334,6 +417,7 @@ const TABS = [
 	['motifs', 'Motifs'],
 	['palettes', 'Palettes'],
 	['variants', 'Variants'],
+	['docs', 'API'],
 ];
 const DEFAULTS = {
 	seed: 'hello-world', title: 'Hello World', subtitle: '', label: '',
@@ -389,7 +473,7 @@ function tileUrl(over) {
 
 let pending = 0;
 let currentUrl = '';
-const dirty = { gallery: true, motifs: true, palettes: true, variants: true };
+const dirty = { gallery: true, motifs: true, palettes: true, variants: true, docs: true };
 
 /* One update per ~frame, regardless of how many input events a drag fires. A
    timer rather than requestAnimationFrame: rAF is throttled to a stop in a
@@ -400,7 +484,7 @@ function schedule() {
 }
 
 function markDirty() {
-	for (const key in dirty) dirty[key] = true;
+	for (const key in dirty) { if (key !== 'docs') dirty[key] = true; }
 }
 
 function apply() {
@@ -417,6 +501,7 @@ function apply() {
 
 function swapPreview(url) {
 	const preview = $('preview');
+	$('frame').dataset.state = 'loading';
 	// Decode off-thread and swap only when ready, so dragging a slider never
 	// blanks the preview between frames.
 	const next = new Image();
@@ -424,6 +509,7 @@ function swapPreview(url) {
 	next.decode().then(function () {
 		// A faster later request may already have won; keep the newest.
 		if (currentUrl !== url) return;
+		$('frame').dataset.state = 'ready';
 		preview.src = url;
 		preview.alt = state.label || state.title || state.seed;
 		// Drive the box from the ratio, not pixel attributes: a 1768x600 image
@@ -431,7 +517,27 @@ function swapPreview(url) {
 		preview.style.aspectRatio = state.w + ' / ' + state.h;
 		$('metaSize').textContent = Math.round(state.w) + ' \u00d7 ' + Math.round(state.h) +
 			(state.format === 'png' && state.scale > 1 ? ' @' + state.scale + '\u00d7' : '') + ' ' + state.format;
-	}).catch(function () {});
+	}).catch(function () {
+		// A decode failure is a real answer — usually a 501 from a PNG request on
+		// a host without the rasteriser — and it should say so, not sit blank.
+		if (currentUrl !== url) return;
+		$('frame').dataset.state = 'error';
+		fetch(url).then(function (response) {
+			return response.text().then(function (text) { return { ok: response.ok, status: response.status, text: text }; });
+		}).then(function (result) {
+			if (currentUrl !== url) return;
+			$('errorTitle').textContent = result.status === 501
+				? 'PNG is not available here'
+				: 'That URL did not render (' + result.status + ')';
+			$('errorBody').textContent = result.status === 501
+				? 'This host has no PNG rasteriser. SVG still renders.'
+				: (result.text || '').slice(0, 200);
+		}).catch(function () {
+			if (currentUrl !== url) return;
+			$('errorTitle').textContent = 'That URL did not render';
+			$('errorBody').textContent = 'The request could not be reached.';
+		});
+	});
 	weigh(url);
 }
 
@@ -472,6 +578,8 @@ function refreshTab() {
 			CONFIG.palettes.map(function (palette) {
 				return { over: { palette: palette.name }, text: palette.name, on: state.palette === palette.name };
 			})));
+	} else if (tab === 'docs') {
+		fillDocs();
 	} else if (tab === 'variants') {
 		fillGrid($('variantGrid'), [{ over: { variant: '' }, text: 'auto', on: state.variant === '' }].concat(
 			Array.from({ length: CONFIG.variants }, function (_, index) {
@@ -505,6 +613,64 @@ function fillGrid(grid, items) {
 		tile.setAttribute('aria-pressed', item.on ? 'true' : 'false');
 		tile.dataset.over = JSON.stringify(item.over);
 	});
+}
+
+/* The API reference, built from the same CONFIG the knobs read, so the list of
+   motifs, palettes and fonts can never drift from what the server accepts. */
+const PARAMS = [
+	['w, h, size', 'Pixels. ~size~ sets both. Capped at the host maximum.', '600'],
+	['title', 'Headline printed on the image.', '—'],
+	['subtitle', 'Second line under the title. ~artist~ is an alias.', '—'],
+	['label', 'Alt text baked into the SVG. Defaults to the title.', 'title'],
+	['motif', 'Force the drawing. Otherwise derived from the seed.', 'from seed'],
+	['palette', 'Force the colours. Otherwise derived from the seed.', 'from seed'],
+	['variant', 'Placement variant, 0–3. Wraps.', 'from seed'],
+	['font', 'Type pairing.', 'serif'],
+	['align', '~left~, ~center~, or ~right~.', 'left'],
+	['valign', '~top~, ~middle~, or ~bottom~.', 'bottom'],
+	['tx, ty', 'Type position as a fraction of the canvas, 0–1.', 'auto'],
+	['textRotate', 'Turn the type block, −180 to 180 degrees.', '0'],
+	['color, titleColor, subtitleColor', 'Hex without the ~#~, or a CSS keyword.', 'from palette'],
+	['scrim', 'Fade the field up behind the type, 0–1.', 'off'],
+	['rotate', '~false~ flattens the motif; a number tilts it, −45 to 45.', 'from seed'],
+	['scale', 'PNG pixel density, 1–4.', '1'],
+];
+
+function docsSection(heading, body) {
+	return '<section><h2>' + heading + '</h2>' + body + '</section>';
+}
+
+function tokenList(values) {
+	return '<div class="tokens">' + values.map(function (value) {
+		return '<code>' + value + '</code>';
+	}).join('') + '</div>';
+}
+
+let docsBuilt = false;
+function fillDocs() {
+	if (docsBuilt) return;
+	docsBuilt = true;
+	const origin = location.origin + CONFIG.base;
+	$('view-docs').innerHTML =
+		docsSection('Endpoint',
+			'<p>Every image is a GET. The URL is the whole cache key, answers carry a strong <code>ETag</code>, and the same URL renders the same image forever.</p>' +
+			'<pre>GET ' + origin + '/{seed}.svg\nGET ' + origin + '/{seed}.png</pre>') +
+		docsSection('Parameters',
+			'<div class="scroll"><table><thead><tr><th>Name</th><th>What it does</th><th>Default</th></tr></thead><tbody>' +
+			PARAMS.map(function (row) {
+				return '<tr><td>' + row[0] + '</td><td>' + row[1].replace(/~([^~]+)~/g, '<code>$1</code>') +
+					'</td><td>' + row[2] + '</td></tr>';
+			}).join('') + '</tbody></table></div>') +
+		docsSection('Motifs', tokenList(CONFIG.motifs)) +
+		docsSection('Palettes', tokenList(CONFIG.palettes.map(function (palette) { return palette.name; }))) +
+		docsSection('Fonts', tokenList(CONFIG.fonts)) +
+		docsSection('In a page',
+			'<pre>&lt;img src="' + origin + '/album-42.svg?w=1200&amp;h=630&amp;title=Hello" width="1200" height="630" alt="Hello"&gt;</pre>') +
+		docsSection('As a library',
+			'<pre>import { renderSvg } from \'polkadot\';\n\nconst svg = renderSvg({ seed: \'album-42\', width: 600, title: \'Hello\' });</pre>') +
+		docsSection('Machine-readable',
+			'<p>The same root answers JSON to anything that does not ask for HTML.</p>' +
+			'<pre>curl -H \'accept: application/json\' ' + (origin || location.origin) + '/</pre>');
 }
 
 let gallerySalt = 1;
@@ -853,14 +1019,25 @@ $('theme').addEventListener('click', function () {
 		? document.documentElement.dataset.theme === 'dark'
 		: matchMedia('(prefers-color-scheme: dark)').matches;
 	document.documentElement.dataset.theme = dark ? 'light' : 'dark';
-	try { localStorage.setItem('placeholder-theme', document.documentElement.dataset.theme); } catch (error) {}
+	try { localStorage.setItem('polkadot-theme', document.documentElement.dataset.theme); } catch (error) {}
 });
+
+$('keys').addEventListener('click', function () { $('keysDialog').showModal(); });
+$('keysClose').addEventListener('click', function () { $('keysDialog').close(); });
 
 document.addEventListener('keydown', function (event) {
 	const tag = (event.target.tagName || '').toLowerCase();
 	if (tag === 'input' || tag === 'select' || tag === 'textarea' || event.metaKey || event.ctrlKey || event.altKey) return;
+	// While the shortcut sheet is up, the only shortcut left is closing it —
+	// the dialog handles Escape itself.
+	if ($('keysDialog').open) return;
 	const key = event.key.toLowerCase();
-	if (key === 'r') randomSeed();
+	if (event.key === '?') $('keysDialog').showModal();
+	else if (key >= '1' && key <= String(TABS.length) && TABS[Number(key) - 1]) selectTab(TABS[Number(key) - 1][0]);
+	else if (key === 's') $('surprise').click();
+	else if (key === 'c') copy(absolute(currentUrl), 'URL copied');
+	else if (key === 'd') download();
+	else if (key === 'r') randomSeed();
 	else if (key === 'm') { state.motif = pick(CONFIG.motifs); markDirty(); schedule(); }
 	else if (key === 'p') { state.palette = pick(CONFIG.palettes).name; markDirty(); schedule(); }
 	else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
@@ -874,7 +1051,7 @@ document.addEventListener('keydown', function (event) {
 });
 
 try {
-	const saved = localStorage.getItem('placeholder-theme');
+	const saved = localStorage.getItem('polkadot-theme');
 	if (saved) document.documentElement.dataset.theme = saved;
 } catch (error) {}
 
@@ -934,7 +1111,7 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>placeholder-images playground</title>
+<title>polkadot playground</title>
 <style>${STYLE}</style>
 </head>
 <body>

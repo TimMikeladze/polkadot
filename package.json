@@ -1,5 +1,5 @@
 {
-	"name": "placeholder-images",
+	"name": "polkadot",
 	"version": "0.1.0",
 	"description": "Deterministic generative placeholder images — SVG, PNG, and an HTTP endpoint, from a seed string",
 	"keywords": [
@@ -12,17 +12,17 @@
 		"png",
 		"svg"
 	],
-	"homepage": "https://github.com/TimMikeladze/placeholder-images#readme",
+	"homepage": "https://github.com/TimMikeladze/polkadot#readme",
 	"bugs": {
-		"url": "https://github.com/TimMikeladze/placeholder-images/issues"
+		"url": "https://github.com/TimMikeladze/polkadot/issues"
 	},
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/TimMikeladze/placeholder-images.git"
+		"url": "git+https://github.com/TimMikeladze/polkadot.git"
 	},
 	"bin": {
-		"placeholder-images": "./dist/cli.js"
+		"polkadot": "./dist/cli.js"
 	},
 	"files": [
 		"dist"

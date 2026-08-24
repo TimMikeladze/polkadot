@@ -13,5 +13,5 @@ const instance = serve({
 	maxSize: flag('max-size') ? Number(flag('max-size')) : undefined,
 });
 
-console.log(`placeholder-images listening on ${instance.url}`);
+console.log(`polkadot listening on ${instance.url}`);
 console.log(`try ${new URL('hello-world.svg?title=Hello&size=600', instance.url)}`);

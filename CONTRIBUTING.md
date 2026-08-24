@@ -1,4 +1,4 @@
-# Contributing to placeholder-images
+# Contributing to polkadot
 
 Thank you for your interest in contributing to our project! This guide will help you get started with the development process.
 
@@ -11,8 +11,8 @@ Thank you for your interest in contributing to our project! This guide will help
 ### Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/TimMikeladze/placeholder-images.git`
-3. Navigate to the project directory: `cd placeholder-images`
+2. Clone your fork: `git clone https://github.com/TimMikeladze/polkadot.git`
+3. Navigate to the project directory: `cd polkadot`
 4. Install dependencies: `bun install`
 5. Start development: `bun run dev`
 
@@ -53,6 +53,6 @@ Please be respectful and constructive in all interactions within our community.
 
 ## Questions?
 
-If you have any questions, please [open an issue](https://github.com/TimMikeladze/placeholder-images/issues/new) for discussion.
+If you have any questions, please [open an issue](https://github.com/TimMikeladze/polkadot/issues/new) for discussion.
 
-Thank you for contributing to placeholder-images!
+Thank you for contributing to polkadot!

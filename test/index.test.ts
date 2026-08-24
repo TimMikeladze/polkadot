@@ -405,7 +405,7 @@ describe('createHandler', () => {
 		);
 		expect(response.headers.get('content-type')).toContain('text/html');
 		const body = await response.text();
-		expect(body).toContain('placeholder-images playground');
+		expect(body).toContain('polkadot playground');
 		// The knob config carries the mount point the page must build URLs against.
 		expect(body).toContain('"base":""');
 	});
