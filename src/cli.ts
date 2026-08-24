@@ -14,4 +14,4 @@ const instance = serve({
 });
 
 console.log(`polkadot listening on ${instance.url}`);
-console.log(`try ${new URL('hello-world.svg?title=Hello&size=600', instance.url)}`);
+console.log(`try ${new URL('polkadot.svg?size=600', instance.url)}`);

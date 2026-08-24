@@ -335,13 +335,13 @@ const BODY = String.raw`
 			<legend><span>Seed</span></legend>
 			<label>
 				<span>String <b id="designOut"></b></span>
-				<span class="seed-row"><input type="text" id="seed" value="hello-world"><button type="button" id="dice" class="icon" title="Random seed" aria-label="Random seed">&#8635;</button></span>
+				<span class="seed-row"><input type="text" id="seed" value="polkadot"><button type="button" id="dice" class="icon" title="Random seed" aria-label="Random seed">&#8635;</button></span>
 			</label>
 		</fieldset>
 
 		<fieldset>
 			<legend><span>Type</span></legend>
-			<label><span>Title</span><input type="text" id="title" value="Hello World"></label>
+			<label><span>Title</span><input type="text" id="title" value="" placeholder="none"></label>
 			<label><span>Subtitle</span><input type="text" id="subtitle" value=""></label>
 			<label><span>Alt text</span><input type="text" id="label" value="" placeholder="defaults to the title"></label>
 			<div class="row">
@@ -485,7 +485,7 @@ const $ = (id) => document.getElementById(id);
    the number keys jump to and what a refresh walks. */
 const SECTIONS = ['preview', 'gallery', 'motifs', 'palettes', 'variants', 'docs'];
 const DEFAULTS = {
-	seed: 'hello-world', title: 'Hello World', subtitle: '', label: '',
+	seed: 'polkadot', title: '', subtitle: '', label: '',
 	motif: '', palette: '', variant: '', font: '', align: 'left', valign: 'bottom', scrim: 0,
 	tx: '', ty: '', textRotate: 0, titleColor: '', subtitleColor: '',
 	w: 600, h: 600, format: 'svg', scale: 1, tilt: 'auto',
