@@ -168,7 +168,7 @@ open http://localhost:3000/
 ```
 
 - **Every knob**: seed, title, subtitle, alt text, font pairing, horizontal and vertical alignment, free X/Y placement, text rotation, per-line colours, scrim, motif, palette, variant, tilt, width, height, ratio lock, canvas presets (avatar, OG card, banner, story…), format, PNG scale, and preview backdrop
-- **One page, no tabs**: preview, gallery, motifs, palettes, variants, and the API reference are all on the page at once — every sheet updates with the knobs, and the tiles below the fold fetch nothing until you scroll to them
+- **One page, no tabs**: preview, gallery, motifs, palettes, variants, and the API reference are all on the page at once — the gallery draws each tile from its own seed with the design knobs released, so forcing a motif does not turn it into twelve copies of one picture (`match current design` locks it back) — every sheet updates with the knobs, and the tiles below the fold fetch nothing until you scroll to them
 - **Copy as**: URL, absolute URL, Markdown, `<img>`, CSS `background-image`, raw SVG source, or a `data:` URI, and a one-click download
 - **Shareable state**: the knobs live in the page's hash, so a pasted link reopens the exact design
 - **API reference**: a section listing every parameter, motif, palette, and font, built from the same config the server validates against

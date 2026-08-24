@@ -417,7 +417,8 @@ const BODY = String.raw`
 		<div class="panel view" id="view-gallery" aria-labelledby="h-gallery">
 			<h2 class="section" id="h-gallery">Gallery</h2>
 			<div class="grid-head">
-				<p>Random seeds with the current knobs. Click one to adopt its seed.</p>
+				<p>Random designs, each from its own seed. Click one to adopt it.</p>
+				<label class="check"><input type="checkbox" id="galleryLock"> match current design</label>
 				<select id="galleryCount"></select>
 				<button type="button" id="shuffle">Shuffle</button>
 			</div>
@@ -489,7 +490,7 @@ const DEFAULTS = {
 	motif: '', palette: '', variant: '', font: '', align: 'left', valign: 'bottom', scrim: 0,
 	tx: '', ty: '', textRotate: 0, titleColor: '', subtitleColor: '',
 	w: 600, h: 600, format: 'svg', scale: 1, tilt: 'auto',
-	backdrop: 'checker', count: 12, lock: false,
+	backdrop: 'checker', count: 12, lock: false, galleryLock: false,
 };
 const state = Object.assign({}, DEFAULTS);
 let ratio = 1;
@@ -526,12 +527,17 @@ function urlFor(over) {
 /* Tiles are always small SVGs: a contact sheet of 48 PNGs would rasterise 48
    times server-side for pictures 200px wide. */
 function tileUrl(over) {
-	const factor = Math.min(1, 320 / Math.max(state.w, state.h));
-	return urlFor(Object.assign({
+	const merged = Object.assign({}, over || {});
+	// A tile may carry its own canvas, so the thumbnail cap is applied to what
+	// the tile actually draws rather than to the main preview's size.
+	const width = merged.w === undefined ? state.w : merged.w;
+	const height = merged.h === undefined ? state.h : merged.h;
+	const factor = Math.min(1, 320 / Math.max(width, height));
+	return urlFor(Object.assign(merged, {
 		format: 'svg', scale: 1,
-		w: Math.max(64, Math.round(state.w * factor)),
-		h: Math.max(64, Math.round(state.h * factor)),
-	}, over || {}));
+		w: Math.max(64, Math.round(width * factor)),
+		h: Math.max(64, Math.round(height * factor)),
+	}));
 }
 
 /* ---------- Rendering ---------- */
@@ -638,7 +644,18 @@ function refreshSheet(tab) {
 	dirty[tab] = false;
 	if (tab === 'gallery') {
 		fillGrid($('galleryGrid'), gallerySeeds().map(function (seed) {
-			return { over: { seed: seed }, text: seed, on: seed === state.seed };
+			// Forcing a motif and a palette makes every tile the same picture with
+			// a different hash. Unless the gallery is locked to the current design,
+			// each tile drops those knobs and draws whatever its own seed asks for,
+			// which is the only thing that makes the sheet worth scrolling.
+			const over = { seed: seed };
+			if (!state.galleryLock) {
+				over.motif = '';
+				over.palette = '';
+				over.variant = '';
+				over.tilt = 'auto';
+			}
+			return { over: over, text: seed, on: seed === state.seed };
 		}));
 	} else if (tab === 'motifs') {
 		fillGrid($('motifGrid'), [{ over: { motif: '' }, text: 'auto', on: state.motif === '' }].concat(
@@ -681,6 +698,10 @@ function fillGrid(grid, items) {
 		const url = tileUrl(item.over);
 		const image = tile.firstChild;
 		if (image.getAttribute('src') !== url) image.setAttribute('src', url);
+		// A tile with its own canvas shows that canvas, rather than being cropped
+		// to the sheet's shared ratio.
+		image.style.aspectRatio =
+			item.over.w && item.over.h ? item.over.w + ' / ' + item.over.h : '';
 		tile.lastChild.textContent = item.text;
 		tile.setAttribute('aria-pressed', item.on ? 'true' : 'false');
 		tile.dataset.over = JSON.stringify(item.over);
@@ -813,6 +834,7 @@ function syncKnobs() {
 	$('tilt').disabled = state.tilt === 'auto';
 	$('tiltOut').textContent = state.tilt === 'auto' ? 'auto' : state.tilt + '\u00b0';
 	$('lock').checked = state.lock === true;
+	$('galleryLock').checked = state.galleryLock === true;
 	$('frame').dataset.backdrop = state.backdrop;
 	$('galleryCount').value = String(state.count);
 	for (const group of ['align', 'valign', 'format', 'backdrop', 'variant']) {
@@ -1034,6 +1056,12 @@ function randomSeed() { state.seed = Math.random().toString(36).slice(2, 10); ma
 
 $('dice').addEventListener('click', randomSeed);
 $('shuffle').addEventListener('click', function () { gallerySalt++; dirty.gallery = true; refreshSheet('gallery'); });
+$('galleryLock').addEventListener('change', function () {
+	state.galleryLock = $('galleryLock').checked;
+	dirty.gallery = true;
+	refreshSheet('gallery');
+	saveHash();
+});
 $('galleryCount').addEventListener('change', function () {
 	state.count = Number($('galleryCount').value);
 	dirty.gallery = true;
