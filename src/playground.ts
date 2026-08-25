@@ -111,13 +111,40 @@ header .actions { display: flex; align-items: center; gap: 6px; }
 /* Knobs, stage, output. Below 1240px the output rail drops under the stage;
    below 900px everything stacks. */
 @media (max-width: 1240px) { .wrap { grid-template-columns: 300px minmax(0, 1fr); } .rail { grid-column: 2; } }
-@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } .rail { grid-column: 1; } }
+/* Mobile: the picture and its copy/share controls come before the knob form,
+   not after it — a visitor on a phone wants the result, not the sliders. */
+@media (max-width: 900px) {
+	.wrap { grid-template-columns: 1fr; }
+	.rail { grid-column: 1; order: 2; }
+	.stage { order: 1; }
+	#knobs { order: 3; }
+}
 
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
 #knobs { position: sticky; top: 64px; max-height: calc(100vh - 84px); overflow-y: auto; padding: 0 0 8px; overscroll-behavior: contain; }
 @media (max-width: 900px) { #knobs { position: static; max-height: none; } }
 fieldset { border: 0; margin: 0; padding: 4px 16px 18px; }
 fieldset + fieldset { border-top: 1px solid var(--line); }
+/* A no-JS accordion: a checkbox styled as a button, and the fieldsets it
+   reveals via a sibling selector. Desktop never sees it — the knobs stay
+   open there — so it only exists to keep the form out of the way below the
+   preview on a phone. */
+.knobs-toggle { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.knobs-toggle-label { display: none; }
+@media (max-width: 900px) {
+	.knobs-toggle-label {
+		display: flex; align-items: center; justify-content: space-between; gap: 8px;
+		margin: 14px 16px 2px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px;
+		background: var(--sunk); color: var(--ink); font: 500 11px/1.2 var(--display);
+		letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+	}
+	.knobs-toggle-label .chev { transition: transform 0.15s; color: var(--muted); }
+	.knobs-toggle:checked ~ .knobs-toggle-label .chev { transform: rotate(180deg); }
+	.knobs-toggle:focus-visible ~ .knobs-toggle-label { outline: 2px solid var(--accent); outline-offset: 1px; }
+	#knobs fieldset { display: none; }
+	.knobs-toggle:checked ~ fieldset { display: block; }
+}
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) { .knobs-toggle-label .chev { transition: none; } }
 legend { padding: 0; }
 /* The heading sits on a hairline that runs to the panel edge, so the sections
    read as bands rather than as one long column of controls. */
@@ -232,6 +259,15 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 12px; margin-top: 14px; font-variant-numeric: tabular-nums; }
 .meta b { color: var(--ink); font-weight: 600; }
 
+/* Copy / randomise / download, right under the picture. The full URL rail
+   still exists below for the export formats, but a thumb on a phone
+   shouldn't have to reach past the gallery and the docs to get there. */
+.mobileBar { display: none; }
+@media (max-width: 900px) {
+	.mobileBar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+	.mobileBar button { padding: 10px 8px; font-size: 12.5px; }
+}
+
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .tile { display: flex; flex-direction: column; gap: 6px; padding: 0; border: 1px solid var(--line); background: var(--sunk); border-radius: 10px; overflow: hidden; cursor: pointer; text-align: left; }
 .tile:hover { border-color: var(--muted); }
@@ -338,6 +374,8 @@ const BODY = String.raw`
 
 <div class="wrap">
 	<form class="panel" id="knobs" autocomplete="off" onsubmit="return false">
+		<input type="checkbox" id="knobsToggle" class="knobs-toggle">
+		<label for="knobsToggle" class="knobs-toggle-label"><span>Customize</span><svg class="chev" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true" focusable="false"><path d="M5 7l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
 		<fieldset>
 			<legend><span>Seed</span></legend>
 			<label>
@@ -419,6 +457,10 @@ const BODY = String.raw`
 				<span>Palette <b id="metaPalette">&mdash;</b></span>
 				<span>Variant <b id="metaVariant">&mdash;</b></span>
 				<span>Weight <b id="metaWeight">&mdash;</b></span>
+			</div>
+			<div class="mobileBar">
+				<button type="button" id="mobileCopy" class="primary">Copy URL</button>
+				<button type="button" id="mobileDownload">Download</button>
 			</div>
 		</div>
 
@@ -1079,7 +1121,7 @@ $('galleryCount').addEventListener('change', function () {
 	refreshSheet('gallery');
 	saveHash();
 });
-$('surprise').addEventListener('click', function () {
+function surprise() {
 	state.seed = Math.random().toString(36).slice(2, 10);
 	state.motif = pick([''].concat(CONFIG.motifs));
 	state.palette = pick([''].concat(CONFIG.palettes.map(function (palette) { return palette.name; })));
@@ -1091,7 +1133,10 @@ $('surprise').addEventListener('click', function () {
 	state.textRotate = pick([0, 0, 0, -6, 8, -90]);
 	markDirty();
 	schedule();
-});
+}
+$('surprise').addEventListener('click', surprise);
+$('mobileDownload').addEventListener('click', download);
+$('mobileCopy').addEventListener('click', function () { copy(absolute(currentUrl), 'URL copied'); });
 $('reset').addEventListener('click', function () {
 	Object.assign(state, DEFAULTS);
 	ratio = 1;
