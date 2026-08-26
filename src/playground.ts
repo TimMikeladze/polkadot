@@ -31,48 +31,60 @@ const PRESETS: Array<[label: string, width: number, height: number]> = [
 const STYLE = String.raw`
 :root {
 	color-scheme: light dark;
-	--bg: #f4f3ef;
-	--panel: #fffffe;
-	--sunk: #eceae4;
-	--ink: #17161a;
-	--muted: #6d6a75;
-	--line: #e1ded8;
-	--accent: #17161a;
-	--on-accent: #fffffe;
-	--shadow: 0 1px 2px rgba(20, 18, 24, 0.05), 0 8px 24px -16px rgba(20, 18, 24, 0.3);
+	--bg: #f2ebda;
+	--panel: #fffdf6;
+	--sunk: #ece0c8;
+	--ink: #201a14;
+	--muted: #8a7c68;
+	--line: rgba(32, 26, 20, 0.14);
+	--line-strong: rgba(32, 26, 20, 0.5);
+	--accent: #201a14;
+	--on-accent: #fffdf6;
+	/* Hard, unblurred offsets rather than blur-and-fade: everything sits on the
+	   page like it was cut out and set down, not lit from above. */
+	--shadow: 6px 6px 0 var(--ink);
+	--shadow-sm: 3px 3px 0 var(--ink);
 	--brand: #c0563e;
-	--radius: 12px;
+	--mustard: #eeac2b;
+	--grape: #7a5cd0;
+	--radius: 20px;
 	--ui: 'Inter Tight', Inter, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-	--mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-	/* Grotesk for anything that names something — the wordmark, section
-	   headings, tabs — so the interface has a voice the body text does not. */
-	--display: 'Space Grotesk', 'Inter Tight', -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	/* A rounded display face for anything that names something — the wordmark,
+	   dialog titles — so the interface has a voice the body text does not.
+	   Section labels use --mono instead: small caps read as a stamp, not a name. */
+	--display: 'Baloo 2', 'Inter Tight', -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 :root[data-theme="dark"] {
 	color-scheme: dark;
-	--bg: #101013;
-	--panel: #191920;
-	--sunk: #121217;
-	--ink: #f2f1ee;
-	--muted: #9b98a3;
-	--line: #2b2b33;
-	--accent: #f2f1ee;
-	--on-accent: #101013;
-	--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
-	--brand: #e0755a;
+	--bg: #161210;
+	--panel: #211a15;
+	--sunk: #150f0c;
+	--ink: #f5ecdb;
+	--muted: #ab9c85;
+	--line: rgba(245, 236, 219, 0.14);
+	--line-strong: rgba(245, 236, 219, 0.4);
+	--accent: #f5ecdb;
+	--on-accent: #161210;
+	--brand: #e8805f;
+	--mustard: #f2c25a;
+	--grape: #9c85e6;
 }
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme="light"]) {
-		--bg: #101013;
-		--panel: #191920;
-		--sunk: #121217;
-		--ink: #f2f1ee;
-		--muted: #9b98a3;
-		--line: #2b2b33;
-		--accent: #f2f1ee;
-		--on-accent: #101013;
-		--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
-		--brand: #e0755a;
+		color-scheme: dark;
+		--bg: #161210;
+		--panel: #211a15;
+		--sunk: #150f0c;
+		--ink: #f5ecdb;
+		--muted: #ab9c85;
+		--line: rgba(245, 236, 219, 0.14);
+		--line-strong: rgba(245, 236, 219, 0.4);
+		--accent: #f5ecdb;
+		--on-accent: #161210;
+		--brand: #e8805f;
+		--mustard: #f2c25a;
+		--grape: #9c85e6;
 	}
 }
 * { box-sizing: border-box; }
@@ -80,6 +92,11 @@ html { scrollbar-gutter: stable; }
 body {
 	margin: 0;
 	background: var(--bg);
+	/* A soft highlight over a dot grid — paper under a loupe, not a flat fill. */
+	background-image:
+		radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--panel) 60%, transparent), transparent 26rem),
+		radial-gradient(circle, var(--line) 1px, transparent 1px);
+	background-size: auto, 18px 18px;
 	color: var(--ink);
 	font: 400 13.5px/1.5 var(--ui);
 	font-feature-settings: 'cv05' 1, 'ss03' 1, 'tnum' 0;
@@ -88,26 +105,31 @@ body {
 }
 header {
 	display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-	padding: 10px 20px; border-bottom: 1px solid var(--line);
-	background: color-mix(in srgb, var(--panel) 88%, transparent);
+	padding: 10px 20px; border-bottom: 2px solid var(--ink);
+	background: color-mix(in srgb, var(--panel) 92%, transparent);
 	backdrop-filter: saturate(180%) blur(12px);
 	position: sticky; top: 0; z-index: 5;
 }
 header .brand { display: flex; align-items: center; gap: 10px; margin-right: 2px; }
-header .logo { display: block; width: 26px; height: 26px; flex: none; }
-header h1 { font: 700 19px/1 var(--display); margin: 0; letter-spacing: -0.045em; }
-/* A hairline instead of a bullet: the tagline is an aside, not a second title. */
-header .tag {
-	color: var(--muted); font-size: 12px; padding-left: 11px;
-	border-left: 1px solid var(--line); line-height: 1.4;
+/* The mark as a little pinned sticker, not an inline glyph. */
+header .logo-badge {
+	display: grid; place-items: center; flex: none; width: 34px; height: 34px;
+	padding: 5px; background: var(--panel); border: 2px solid var(--ink); border-radius: 10px;
+	box-shadow: var(--shadow-sm); transform: rotate(-4deg);
 }
-header .tag.keys { display: flex; align-items: center; gap: 5px; }
-header .tag.keys em { font-style: normal; margin-right: 4px; }
+header .logo { display: block; width: 100%; height: 100%; }
+header h1 { font: 700 20px/1 var(--display); margin: 0; letter-spacing: -0.01em; }
+header .tag {
+	display: flex; align-items: center; gap: 5px; color: var(--ink);
+	font: 600 10.5px/1 var(--mono); letter-spacing: 0.04em; text-transform: uppercase;
+	padding: 7px 10px; background: var(--sunk); border: 1.5px solid var(--line-strong); border-radius: 999px;
+}
+header .tag.keys em { font-style: normal; margin-right: 4px; opacity: 0.7; }
 header .grow { flex: 1; }
 header .actions { display: flex; align-items: center; gap: 6px; }
 @media (max-width: 980px) { header .tag.keys { display: none; } }
 @media (max-width: 560px) { header .tag { display: none; } }
-.wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr) 280px; gap: 20px; padding: 20px; align-items: start; }
+.wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr) 280px; gap: 20px; padding: 20px; align-items: start; max-width: 1680px; margin: 0 auto; }
 /* Knobs, stage, output. Below 1240px the output rail drops under the stage;
    below 900px everything stacks. */
 @media (max-width: 1240px) { .wrap { grid-template-columns: 300px minmax(0, 1fr); } .rail { grid-column: 2; } }
@@ -120,11 +142,11 @@ header .actions { display: flex; align-items: center; gap: 6px; }
 	#knobs { order: 3; }
 }
 
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-#knobs { position: sticky; top: 64px; max-height: calc(100vh - 84px); overflow-y: auto; padding: 0 0 8px; overscroll-behavior: contain; }
+.panel { background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow); }
+#knobs { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow-y: auto; padding: 0 0 8px; overscroll-behavior: contain; }
 @media (max-width: 900px) { #knobs { position: static; max-height: none; } }
 fieldset { border: 0; margin: 0; padding: 4px 16px 18px; }
-fieldset + fieldset { border-top: 1px solid var(--line); }
+fieldset + fieldset { border-top: 1.5px solid var(--line); }
 /* A no-JS accordion: a checkbox styled as a button, and the fieldsets it
    reveals via a sibling selector. Desktop never sees it — the knobs stay
    open there — so it only exists to keep the form out of the way below the
@@ -134,14 +156,14 @@ fieldset + fieldset { border-top: 1px solid var(--line); }
 @media (max-width: 900px) {
 	.knobs-toggle-label {
 		display: flex; align-items: center; justify-content: space-between; gap: 8px;
-		margin: 14px 16px 2px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px;
-		background: var(--sunk); color: var(--ink); font: 500 11px/1.2 var(--display);
+		margin: 14px 16px 2px; padding: 11px 12px; border: 1.5px solid var(--line-strong); border-radius: 10px;
+		background: var(--sunk); color: var(--ink); font: 600 11px/1.2 var(--mono);
 		letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
 	}
 	.knobs-toggle-label .chev { transition: transform 0.15s; color: var(--muted); }
 	.knobs-toggle:checked ~ .knobs-toggle-label .chev { transform: rotate(180deg); }
 	.knobs-toggle:focus-visible ~ .knobs-toggle-label { outline: 2px solid var(--accent); outline-offset: 1px; }
-	#knobs fieldset { display: none; }
+	.knobs-toggle ~ fieldset { display: none; }
 	.knobs-toggle:checked ~ fieldset { display: block; }
 }
 @media (max-width: 900px) and (prefers-reduced-motion: reduce) { .knobs-toggle-label .chev { transition: none; } }
@@ -151,23 +173,23 @@ legend { padding: 0; }
 legend > span {
 	display: flex; align-items: center; gap: 10px;
 	padding: 12px 0 2px; color: var(--muted);
-	font: 500 11px/1.4 var(--display); letter-spacing: 0.14em; text-transform: uppercase;
+	font: 600 11px/1.4 var(--mono); letter-spacing: 0.14em; text-transform: uppercase;
 }
 legend > span::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 label { display: block; margin: 12px 0 0; }
-label > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--muted); font: 500 10.5px/1.4 var(--display); letter-spacing: 0.11em; text-transform: uppercase; margin-bottom: 6px; }
+label > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--muted); font: 600 10.5px/1.4 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 6px; }
 /* Live values are read while dragging, so they get monospace digits and a chip
    of their own rather than blending into the label. */
 label > span b {
-	color: var(--ink); font: 500 11px/1.4 var(--mono);
+	color: var(--ink); font: 600 11px/1.4 var(--mono);
 	font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none;
-	background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px;
+	background: var(--sunk); border: 1.5px solid var(--line-strong); border-radius: 999px; padding: 1px 7px;
 }
 input[type=text], select {
-	width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px;
+	width: 100%; padding: 8px 10px; border: 1.5px solid var(--line-strong); border-radius: 10px;
 	background: var(--sunk); color: var(--ink); font: inherit;
 }
-input[type=text]:hover, select:hover { border-color: var(--muted); }
+input[type=text]:hover, select:hover { border-color: var(--ink); }
 select {
 	appearance: none; padding-right: 28px; cursor: pointer;
 	background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
@@ -178,68 +200,77 @@ select {
 }
 input[type=text]:focus-visible, select:focus-visible, button:focus-visible,
 input[type=range]:focus-visible, input[type=color]:focus-visible {
-	outline: 2px solid var(--accent); outline-offset: 1px;
+	outline: 3px solid var(--grape); outline-offset: 2px;
 }
 /* A hand-drawn track: the native control is a different height in every
    browser, which makes the slider rows fail to line up with each other. */
 input[type=range] {
 	appearance: none; width: 100%; height: 20px; background: transparent; cursor: pointer;
 }
-input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 999px; background: var(--line); }
-input[type=range]::-moz-range-track { height: 4px; border-radius: 999px; background: var(--line); }
+input[type=range]::-webkit-slider-runnable-track { height: 5px; border-radius: 999px; background: var(--line-strong); }
+input[type=range]::-moz-range-track { height: 5px; border-radius: 999px; background: var(--line-strong); }
 input[type=range]::-webkit-slider-thumb {
-	appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%;
-	background: var(--accent); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--accent);
+	appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%;
+	background: var(--ink); border: 2.5px solid var(--panel); box-shadow: 0 0 0 1.5px var(--ink);
 }
 input[type=range]::-moz-range-thumb {
-	width: 14px; height: 14px; border-radius: 50%;
-	background: var(--accent); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--accent);
+	width: 16px; height: 16px; border-radius: 50%;
+	background: var(--ink); border: 2.5px solid var(--panel); box-shadow: 0 0 0 1.5px var(--ink);
 }
-input[type=range]:hover::-webkit-slider-thumb { background: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
-input[type=range]:hover::-moz-range-thumb { background: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+input[type=range]:hover::-webkit-slider-thumb { background: var(--brand); box-shadow: 0 0 0 1.5px var(--brand); }
+input[type=range]:hover::-moz-range-thumb { background: var(--brand); box-shadow: 0 0 0 1.5px var(--brand); }
 input[type=range]:disabled { opacity: 0.4; cursor: not-allowed; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
 .seed-row { display: flex; gap: 6px; }
 .seed-row input { flex: 1; min-width: 0; }
+/* Tactile: a button sits on its own hard shadow and presses flat into it,
+   rather than dimming or lifting on a soft glow. */
 button {
-	padding: 7px 11px; border: 1px solid var(--line); border-radius: 8px;
-	background: var(--sunk); color: var(--ink); font: inherit; cursor: pointer;
-	white-space: nowrap;
+	padding: 8px 12px; border: 2px solid var(--ink); border-radius: 10px;
+	background: var(--sunk); color: var(--ink); font: 600 12.5px/1 var(--ui); cursor: pointer;
+	white-space: nowrap; box-shadow: var(--shadow-sm);
+	transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
-button:hover { border-color: var(--muted); }
-button:active { transform: translateY(0.5px); }
-button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-button.icon { padding: 7px 9px; }
-.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--sunk); }
+button:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+button.primary { background: var(--brand); color: var(--on-accent); border-color: var(--ink); }
+button.icon { padding: 8px 10px; }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }
+.seg { display: flex; border: 2px solid var(--ink); border-radius: 10px; overflow: hidden; background: var(--sunk); }
 .seg button {
-	flex: 1; border: 0; border-radius: 0; background: transparent; padding: 6px 4px;
+	flex: 1; border: 0; border-radius: 0; background: transparent; padding: 7px 4px; box-shadow: none;
 	font-size: 12px; color: var(--muted);
 }
-.seg button + button { border-left: 1px solid var(--line); }
-.seg button:hover { color: var(--ink); }
-.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.seg button:hover { color: var(--ink); transform: none; box-shadow: none; }
+.seg button:active { transform: none; box-shadow: none; }
+.seg button + button { border-left: 1.5px solid var(--line-strong); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-accent); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.chips button { font-size: 12px; padding: 5px 9px; }
+.chips button { font-size: 11.5px; padding: 6px 10px; box-shadow: 2px 2px 0 var(--ink); }
+.chips button:hover { box-shadow: 3px 3px 0 var(--ink); }
 .check { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .color-row { display: flex; gap: 6px; }
 input[type=color] {
-	flex: 1; min-width: 0; height: 32px; padding: 2px; border: 1px solid var(--line);
-	border-radius: 8px; background: var(--sunk); cursor: pointer;
+	flex: 1; min-width: 0; height: 32px; padding: 2px; border: 1.5px solid var(--line-strong);
+	border-radius: 9px; background: var(--sunk); cursor: pointer;
 }
-.check input { accent-color: var(--accent); }
+.check input { accent-color: var(--brand); }
 
 .stage { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 /* One page, so each panel names itself instead of leaning on a tab. */
 h2.section {
 	margin: 0 0 14px; color: var(--muted);
-	font: 500 11px/1.4 var(--display); letter-spacing: 0.14em; text-transform: uppercase;
+	font: 600 11px/1.4 var(--mono); letter-spacing: 0.14em; text-transform: uppercase;
 	display: flex; align-items: center; gap: 10px;
 }
 h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .view { padding: 18px; }
 .view[hidden] { display: none; }
+/* An artboard inset rather than a second hard shadow: the picture sits inside
+   the panel's own shadow instead of stacking another one on top of it. */
 .frame {
-	display: flex; align-items: center; justify-content: center; min-height: 340px; border-radius: 8px;
+	display: flex; align-items: center; justify-content: center; min-height: 340px; border-radius: 14px;
+	border: 1.5px solid var(--line-strong);
 }
 /* A checkerboard keeps both very light and very dark palettes readable. */
 .frame[data-backdrop="checker"] {
@@ -254,7 +285,7 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 .frame[data-backdrop="dark"] { background: #0b0b0d; }
 #preview {
 	width: auto; height: auto; max-width: 100%; max-height: 66vh; object-fit: contain;
-	border-radius: 4px; display: block; box-shadow: var(--shadow);
+	border-radius: 8px; display: block;
 }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 12px; margin-top: 14px; font-variant-numeric: tabular-nums; }
 .meta b { color: var(--ink); font-weight: 600; }
@@ -269,9 +300,9 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-.tile { display: flex; flex-direction: column; gap: 6px; padding: 0; border: 1px solid var(--line); background: var(--sunk); border-radius: 10px; overflow: hidden; cursor: pointer; text-align: left; }
-.tile:hover { border-color: var(--muted); }
-.tile[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.tile { display: flex; flex-direction: column; gap: 6px; padding: 0; border: 1.5px solid var(--line-strong); background: var(--sunk); border-radius: 12px; overflow: hidden; cursor: pointer; text-align: left; }
+.tile:hover { border-color: var(--ink); }
+.tile[aria-pressed="true"] { border-color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
 .tile img { width: 100%; display: block; aspect-ratio: var(--tile-ratio, 1); object-fit: cover; background: var(--sunk); }
 .tile span { padding: 0 8px 7px; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tile[aria-pressed="true"] span { color: var(--ink); }
@@ -281,14 +312,14 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 
 /* The URL is what the page is for, so it gets its own rail and rides along
    while the sheets scroll past. */
-.rail { position: sticky; top: 64px; }
+.rail { position: sticky; top: 70px; }
 @media (max-width: 1240px) { .rail { position: static; } }
 .out { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
 .out h2.section { margin: 0; }
 .out .url { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
 .out code {
 	min-width: 0; background: var(--sunk); max-height: 140px; overflow-y: auto;
-	border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px;
+	border: 1.5px solid var(--line-strong); border-radius: 9px; padding: 9px 10px;
 	font: 400 12px/1.5 var(--mono);
 	/* Wrapped, not scrolled: in a narrow rail a one-line URL would hide most of
 	   itself behind a scrollbar nobody drags. */
@@ -300,10 +331,15 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 .toast {
 	position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px);
 	background: var(--accent); color: var(--on-accent); padding: 8px 14px; border-radius: 999px;
-	font-size: 13px; opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s;
+	border: 2px solid var(--ink); font: 600 12.5px/1.4 var(--ui);
+	opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s;
 }
 .toast[data-show="true"] { opacity: 1; transform: translateX(-50%) translateY(0); }
-kbd { font: 500 11px/1 var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 3px 4px; color: var(--muted); }
+/* A little keycap: a solid bottom edge reads as depth without a blurred shadow. */
+kbd {
+	font: 600 11px/1 var(--mono); border: 1.5px solid var(--line-strong); border-bottom-width: 2.5px;
+	border-radius: 5px; padding: 3px 5px; color: var(--ink); background: var(--panel);
+}
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 
 /* The preview owns its own busy and broken states, so a slow render or a 501
@@ -319,7 +355,7 @@ kbd { font: 500 11px/1 var(--mono); border: 1px solid var(--line); border-bottom
 .frame[data-state="error"] #preview { display: none; }
 .error {
 	display: none; max-width: 320px; text-align: center; color: var(--muted); font-size: 13px;
-	padding: 16px; border: 1px dashed var(--line); border-radius: 10px; background: var(--panel);
+	padding: 16px; border: 1.5px dashed var(--line-strong); border-radius: 12px; background: var(--panel);
 }
 .frame[data-state="error"] .error { display: block; }
 .error b { display: block; color: var(--ink); margin-bottom: 4px; }
@@ -327,11 +363,11 @@ kbd { font: 500 11px/1 var(--mono); border: 1px solid var(--line); border-bottom
 
 /* API reference tab */
 .docs { display: flex; flex-direction: column; gap: 22px; }
-.docs h2 { font: 500 11px/1.4 var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.docs h2 { font: 600 11px/1.4 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
 .docs p { margin: 0 0 12px; color: var(--muted); max-width: 68ch; }
 .docs pre {
-	margin: 0; overflow-x: auto; background: var(--sunk); border: 1px solid var(--line);
-	border-radius: 8px; padding: 10px 12px;
+	margin: 0; overflow-x: auto; background: var(--sunk); border: 1.5px solid var(--line-strong);
+	border-radius: 9px; padding: 10px 12px;
 	font: 400 12px/1.7 var(--mono);
 }
 .docs table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -340,15 +376,15 @@ kbd { font: 500 11px/1 var(--mono); border: 1px solid var(--line); border-bottom
 .docs td:first-child { white-space: nowrap; font: 500 12px/1.5 var(--mono); }
 .docs .scroll { overflow-x: auto; }
 .docs .tokens { display: flex; flex-wrap: wrap; gap: 6px; }
-.docs .tokens code { background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; font: 400 12px/1.5 var(--mono); }
+.docs .tokens code { background: var(--sunk); border: 1.5px solid var(--line-strong); border-radius: 999px; padding: 3px 9px; font: 400 12px/1.5 var(--mono); }
 
 /* Shortcut sheet */
 dialog {
-	border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
-	color: var(--ink); padding: 18px 20px; box-shadow: var(--shadow); max-width: 340px; width: calc(100% - 32px);
+	border: 2px solid var(--ink); border-radius: var(--radius); background: var(--panel);
+	color: var(--ink); padding: 20px 22px; box-shadow: var(--shadow); max-width: 340px; width: calc(100% - 32px);
 }
-dialog::backdrop { background: rgba(10, 10, 14, 0.45); }
-dialog h2 { margin: 0 0 14px; font: 600 14px/1 var(--display); letter-spacing: -0.02em; }
+dialog::backdrop { background: rgba(20, 16, 12, 0.45); }
+dialog h2 { margin: 0 0 14px; font: 700 16px/1 var(--display); letter-spacing: -0.01em; }
 dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 0; font-size: 13px; align-items: center; }
 dialog dd { margin: 0; color: var(--muted); }
 .skip {
@@ -361,7 +397,7 @@ dialog dd { margin: 0; color: var(--muted); }
 const BODY = String.raw`
 <a class="skip" href="#view-preview">Skip to the preview</a>
 <header>
-	<span class="brand"><svg class="logo" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="3.1" fill="currentColor" opacity="0.45"/><circle cx="18" cy="6" r="3.1" fill="currentColor" opacity="0.45"/><circle cx="6" cy="18" r="3.1" fill="currentColor" opacity="0.45"/><circle cx="18" cy="18" r="3.1" fill="currentColor" opacity="0.45"/><circle cx="12" cy="12" r="4.4" fill="var(--brand)"/></svg><h1>polkadot</h1></span>
+	<span class="brand"><span class="logo-badge"><svg class="logo" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="3.1" fill="var(--mustard)"/><circle cx="18" cy="6" r="3.1" fill="var(--grape)"/><circle cx="6" cy="18" r="3.1" fill="var(--grape)"/><circle cx="18" cy="18" r="3.1" fill="var(--mustard)"/><circle cx="12" cy="12" r="4.4" fill="var(--brand)"/></svg></span><h1>polkadot</h1></span>
 	<span class="tag">every knob is a URL parameter</span>
 	<span class="grow"></span>
 	<span class="tag keys"><kbd>R</kbd><em>seed</em><kbd>M</kbd><em>motif</em><kbd>P</kbd><em>palette</em><kbd>?</kbd><em>all</em></span>
@@ -1239,7 +1275,7 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 			? ''
 			: `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Baloo+2:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 `;
 	const palettes = options.palettes ?? PALETTES;
 	const config = JSON.stringify({
