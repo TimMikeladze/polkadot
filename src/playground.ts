@@ -396,6 +396,28 @@ kbd {
 .docs .tokens { display: flex; flex-wrap: wrap; gap: 6px; }
 .docs .tokens code { background: var(--sunk); border: 1.5px solid var(--line-strong); border-radius: 999px; padding: 3px 9px; font: 400 12px/1.5 var(--mono); }
 
+/* Attribution. The page is one long scroll, so the footer gets the same
+   cut-out treatment as the panels rather than fading into the background. */
+footer {
+	display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 14px;
+	max-width: 1680px; margin: 0 auto;
+	padding: 4px max(20px, env(safe-area-inset-right)) max(28px, calc(env(safe-area-inset-bottom) + 20px)) max(20px, env(safe-area-inset-left));
+	color: var(--muted); font-size: 12.5px; text-align: center;
+}
+footer .by { display: inline-flex; align-items: center; gap: 5px; }
+footer a {
+	display: inline-flex; align-items: center; gap: 6px; color: var(--ink); text-decoration: none;
+	padding: 6px 11px; background: var(--panel); border: 1.5px solid var(--line-strong); border-radius: 999px;
+	font-weight: 600; box-shadow: 2px 2px 0 var(--ink);
+	transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+footer a svg { width: 14px; height: 14px; flex: none; fill: currentColor; }
+@media (hover: hover) { footer a:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); border-color: var(--ink); } }
+footer a:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+footer a:focus-visible { outline: 3px solid var(--grape); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { footer a { transition: none; } }
+@media (pointer: coarse) { footer a { padding: 9px 13px; } }
+
 /* Shortcut sheet */
 dialog {
 	border: 2px solid var(--ink); border-radius: var(--radius); background: var(--panel);
@@ -584,6 +606,22 @@ const BODY = String.raw`
 		</div>
 	</aside>
 </div>
+
+<footer>
+	<span class="by">Made by <b>Tim Mikeladze</b></span>
+	<a href="https://github.com/TimMikeladze/polkadot" target="_blank" rel="noopener noreferrer">
+		<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.19c0 .21.15.46.55.38A8 8 0 0 0 8 0Z"/></svg>
+		GitHub
+	</a>
+	<a href="https://x.com/linesofcode" target="_blank" rel="noopener noreferrer">
+		<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M12.6 0h2.45l-5.36 6.13L16 16h-4.94l-3.87-5.06L2.77 16H.32l5.73-6.55L0 0h5.06l3.5 4.63L12.6 0Zm-.86 14.54h1.36L4.32 1.38H2.87l8.87 13.16Z"/></svg>
+		@linesofcode
+	</a>
+	<a href="https://linesofcode.dev" target="_blank" rel="noopener noreferrer">
+		<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm5.42 4.8h-2.1a11.4 11.4 0 0 0-1.13-2.9 6.53 6.53 0 0 1 3.23 2.9ZM8 1.54c.63.75 1.16 1.83 1.5 3.26h-3c.34-1.43.87-2.51 1.5-3.26ZM1.72 9.6a6.5 6.5 0 0 1 0-3.2h2.35a13.9 13.9 0 0 0 0 3.2H1.72Zm.64 1.6h2.1c.24 1.05.6 2.03 1.05 2.9a6.53 6.53 0 0 1-3.15-2.9Zm2.1-6.4h-2.1a6.53 6.53 0 0 1 3.15-2.9c-.45.87-.81 1.85-1.05 2.9ZM8 14.46c-.63-.75-1.16-1.83-1.5-3.26h3c-.34 1.43-.87 2.51-1.5 3.26ZM9.77 9.6H6.23a12.4 12.4 0 0 1 0-3.2h3.54a12.4 12.4 0 0 1 0 3.2Zm.42 4.5c.46-.87.82-1.85 1.06-2.9h2.09a6.53 6.53 0 0 1-3.15 2.9Zm1.74-4.5a13.9 13.9 0 0 0 0-3.2h2.35a6.5 6.5 0 0 1 0 3.2h-2.35Z"/></svg>
+		linesofcode.dev
+	</a>
+</footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog id="keysDialog">
 	<h2>Keyboard shortcuts</h2>

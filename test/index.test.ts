@@ -502,8 +502,12 @@ describe('playgroundHtml', () => {
 		expect(html).toContain(`"variants":${VARIANTS}`);
 	});
 
+	const withoutLinks = (page: string) => page.replace(/<a\b[^>]*>/g, '');
+
 	test('loads its type from Google Fonts, and nothing else off-site', () => {
-		const external = html.match(/(?:src|href)="(?:https?:)?\/\/[^"]+/g) ?? [];
+		// Anchors are stripped first: the footer credits link out by design,
+		// and a link the reader clicks is not an asset the page fetches.
+		const external = withoutLinks(html).match(/(?:src|href)="(?:https?:)?\/\/[^"]+/g) ?? [];
 		expect(external.length).toBeGreaterThan(0);
 		for (const url of external) expect(url).toMatch(/fonts\.(googleapis|gstatic)\.com/);
 		expect(html.startsWith('<!doctype html>')).toBe(true);
@@ -511,7 +515,7 @@ describe('playgroundHtml', () => {
 
 	test('webfonts: false leaves no external asset at all', () => {
 		const offline = playgroundHtml({ webfonts: false });
-		expect(offline).not.toMatch(/(src|href)="(?:https?:)?\/\//);
+		expect(withoutLinks(offline)).not.toMatch(/(src|href)="(?:https?:)?\/\//);
 		expect(offline).toContain('Inter Tight');
 	});
 
@@ -525,6 +529,17 @@ describe('playgroundHtml', () => {
 		expect(html).toMatch(/input\[type=text\], select \{ font-size: 16px/);
 		// A tap must not leave a control stuck in its hover state.
 		expect(html).toContain('@media (hover: hover)');
+	});
+
+	test('credits its author, with nothing but the three links off-site', () => {
+		expect(html).toContain('Tim Mikeladze');
+		expect(html).toContain('https://github.com/TimMikeladze/polkadot');
+		expect(html).toContain('https://x.com/linesofcode');
+		expect(html).toContain('https://linesofcode.dev');
+		// An outbound link opened in a new tab must not hand the opener over.
+		for (const link of html.match(/<a href="https:\/\/[^>]*>/g) ?? []) {
+			expect(link).toContain('rel="noopener noreferrer"');
+		}
 	});
 
 	test('stays ASCII, because the bundler escapes raw templates', () => {
