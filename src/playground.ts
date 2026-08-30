@@ -21,7 +21,26 @@ export type PlaygroundOptions = {
 	 * Open Graph tags are only emitted when this is known.
 	 */
 	siteUrl?: string;
+	/**
+	 * Umami analytics for the page. The tag is emitted only when a website ID
+	 * is given, so an unconfigured mount ships a page with no tracker on it.
+	 */
+	analytics?: PlaygroundAnalytics;
 };
+
+export type PlaygroundAnalytics = {
+	/** The site's ID in the Umami dashboard. */
+	websiteId: string;
+	/**
+	 * Absolute URL of the Umami instance's tracker, e.g.
+	 * `https://analytics.example.com/script.js`. Defaults to Umami Cloud.
+	 */
+	scriptUrl?: string;
+	/** Comma-separated hostnames to count, so previews stay out of the numbers. */
+	domains?: string;
+};
+
+const UMAMI_CLOUD_SCRIPT = 'https://cloud.umami.is/script.js';
 
 /** Canvas sizes worth one click, in the order a designer reaches for them. */
 const PRESETS: Array<[label: string, width: number, height: number]> = [
@@ -1508,6 +1527,15 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 `
 		: '';
 
+	// The tracker is the one asset the page loads that is not its own type, and
+	// it is opt-in: with no website ID configured nothing is emitted at all.
+	const analytics = options.analytics?.websiteId
+		? `<script defer src="${escapeHtml(options.analytics.scriptUrl ?? UMAMI_CLOUD_SCRIPT)}" data-website-id="${escapeHtml(options.analytics.websiteId)}"${
+				options.analytics.domains ? ` data-domains="${escapeHtml(options.analytics.domains)}"` : ''
+			}></script>
+`
+		: '';
+
 	return `<!doctype html>
 <html lang="en">
 <head>
@@ -1520,7 +1548,7 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 <meta name="theme-color" content="#f2ebda" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#201a14" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
-${social}${fonts}
+${social}${fonts}${analytics}
 <style>${STYLE}</style>
 </head>
 <body>

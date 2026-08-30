@@ -1,7 +1,7 @@
 import { hashSeed, MOTIFS, type Motif } from './design.ts';
 import { FONT_NAMES } from './fonts.ts';
 import { PALETTES, type Palette } from './palettes.ts';
-import { playgroundHtml } from './playground.ts';
+import { playgroundHtml, type PlaygroundAnalytics } from './playground.ts';
 import { renderPng, type PngFontOptions } from './png.ts';
 import { renderSvg, type SvgOptions } from './svg.ts';
 
@@ -29,6 +29,11 @@ export type HandlerOptions = {
 	fonts?: PngFontOptions;
 	/** Absolute origin used for the playground's canonical and social tags. */
 	siteUrl?: string;
+	/**
+	 * Umami analytics for the playground page. Passed straight through; with no
+	 * website ID the page carries no tracker.
+	 */
+	analytics?: PlaygroundAnalytics;
 };
 
 const DEFAULT_MAX_SIZE = 2048;

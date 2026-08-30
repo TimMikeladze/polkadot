@@ -209,7 +209,7 @@ open http://localhost:3000/
 
 It is deliberately boring under the hood: every preview is an `<img>` on the same immutable-cached URL the API serves, so revisiting a knob position is a browser cache hit. Knob changes are coalesced to one update per ~16ms, the main preview is decoded off-thread and swapped in only once ready, and contact sheets fill lazily, reuse their tiles, and always request small SVGs — a 48-tile sheet costs less than one full-size PNG.
 
-Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize, siteUrl })`, which returns a single HTML string with no build step. Its own type — Inter Tight for text, Baloo 2 for the wordmark and headings, IBM Plex Mono for values and code — comes from Google Fonts with `display=swap`, so the page is readable on system stacks before the fonts land and stays readable if they never do. That link is the page's only external asset; `webfonts: false` drops it, on `playgroundHtml` or on `createHandler`, leaving a page that loads nothing off-site. `createHandler({ playground: false })` turns the page off entirely.
+Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize, siteUrl, analytics })`, which returns a single HTML string with no build step. Its own type — Inter Tight for text, Baloo 2 for the wordmark and headings, IBM Plex Mono for values and code — comes from Google Fonts with `display=swap`, so the page is readable on system stacks before the fonts land and stays readable if they never do. That link is the page's only external asset; `webfonts: false` drops it, on `playgroundHtml` or on `createHandler`, leaving a page that loads nothing off-site. `createHandler({ playground: false })` turns the page off entirely.
 
 #### Sharing the page
 
@@ -218,6 +218,23 @@ The page carries a title, a description, a canonical link, Open Graph and Twitte
 Those tags need an absolute origin, because a crawler will not resolve a relative image. `createHandler` takes it from the request, so a mounted handler is correct without configuration; pass `siteUrl: 'https://example.com'` when the public address is not the one the request arrives on — behind a proxy, say. Without a known origin the social tags are left out rather than emitted broken.
 
 The card itself is a static `og.png`, not a render: X and LinkedIn reject an SVG, and a crawler should not be waiting on a rasteriser. `bun run og` rebuilds it, along with the favicon and the touch icon, into `public/`.
+
+#### Analytics
+
+The page can carry an [Umami](https://umami.is) tag, and carries nothing when it is not configured:
+
+```ts
+createHandler({
+	analytics: {
+		websiteId: process.env.UMAMI_WEBSITE_ID,
+		scriptUrl: 'https://analytics.example.com/script.js',
+	},
+});
+```
+
+Without a `websiteId` no tag is emitted at all, so an unconfigured mount — a local run, a fork, a clone — serves a page that loads no tracker. `scriptUrl` names a self-hosted instance's `script.js` and defaults to Umami Cloud; `domains` takes a comma-separated list of hostnames to count, which keeps preview deployments out of the numbers.
+
+This repo's own deployment reads `UMAMI_WEBSITE_ID`, `UMAMI_SCRIPT_URL` and `UMAMI_DOMAINS` from the environment in `api/index.ts`, so tracking is a deployment setting rather than a code change.
 
 #### Deploying to Vercel
 

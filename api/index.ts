@@ -23,7 +23,18 @@ const fontDirs = [new URL('../fonts', import.meta.url).pathname, `${process.cwd(
 	(dir) => existsSync(dir),
 );
 
+/**
+ * Analytics is configuration, not code: the tag is only emitted when the
+ * deployment carries a website ID, so local runs, forks and previews of this
+ * repo serve a page with no tracker on it.
+ */
+const websiteId = process.env.UMAMI_WEBSITE_ID;
+const analytics = websiteId
+	? { websiteId, scriptUrl: process.env.UMAMI_SCRIPT_URL, domains: process.env.UMAMI_DOMAINS }
+	: undefined;
+
 const handler = createHandler({
+	analytics,
 	// Vercel caches on the URL, and so does the browser; the output is a pure
 	// function of that URL, so a year is safe.
 	cacheControl: 'public, max-age=31536000, s-maxage=31536000, immutable',

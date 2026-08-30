@@ -591,6 +591,22 @@ describe('playgroundHtml', () => {
 		);
 	});
 
+	test('carries no analytics tag until one is configured', () => {
+		expect(html).not.toContain('data-website-id');
+		const tracked = playgroundHtml({
+			analytics: { websiteId: 'abc-123', scriptUrl: 'https://umami.example.com/script.js' },
+		});
+		expect(tracked).toContain(
+			'<script defer src="https://umami.example.com/script.js" data-website-id="abc-123"></script>',
+		);
+		// A website ID off an env var lands in an attribute, so it is escaped
+		// like every other value the page is handed.
+		const hostile = playgroundHtml({ analytics: { websiteId: '"><script>alert(1)</script>' } });
+		expect(hostile).not.toContain('"><script>alert(1)');
+		// With no instance URL the tag points at Umami Cloud.
+		expect(hostile).toContain('src="https://cloud.umami.is/script.js"');
+	});
+
 	test('names an icon and a theme colour for both schemes', () => {
 		expect(html).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml"');
 		expect(html).toContain('rel="apple-touch-icon"');
