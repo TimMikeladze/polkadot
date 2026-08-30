@@ -2,7 +2,22 @@
 
 Deterministic generative placeholder images from a seed string. Zero dependencies, no network, no stored assets — the same seed always produces the same image, on every device and in every runtime.
 
-Hosted at **[polkadot.sh](https://polkadot.sh)** — try `https://polkadot.sh/album-42.svg?title=Lahai`.
+<p align="center">
+  <img src="https://polkadot.sh/album-42.svg?size=200" width="118" height="118" alt="album-42 — rings, tide">
+  <img src="https://polkadot.sh/northern-line.svg?size=200" width="118" height="118" alt="northern-line — split, vermilion">
+  <img src="https://polkadot.sh/floating-points.svg?size=200" width="118" height="118" alt="floating-points — bloom, forest">
+  <img src="https://polkadot.sh/four-tet.svg?size=200" width="118" height="118" alt="four-tet — horizon, dusk">
+  <img src="https://polkadot.sh/stereolab.svg?size=200" width="118" height="118" alt="stereolab — tiles, clay">
+  <img src="https://polkadot.sh/caribou.svg?size=200" width="118" height="118" alt="caribou — sun, press">
+</p>
+
+<p align="center">
+  <img src="https://polkadot.sh/northern-line.svg?w=1200&amp;h=340&amp;title=Northern%20Line&amp;subtitle=late%20edition&amp;font=display&amp;scrim=0.6" width="720" alt="A wide card reading Northern Line over a split motif">
+</p>
+
+Every picture above is a live URL and nothing else — the first one is [`polkadot.sh/album-42.svg?size=200`](https://polkadot.sh/album-42.svg?size=200), the card is the same endpoint with `&title=`. Change the seed, get a different image; keep it, get that one back forever.
+
+Hosted at **[polkadot.sh](https://polkadot.sh)**, which is also the playground.
 
 Use it inline as a library, or link out to a URL and let the endpoint render it.
 
@@ -96,6 +111,23 @@ const png = await renderPng({
 
 Requires `@resvg/resvg-js`. Because it rasterises the exact SVG the library produces, an OG card and the inline image are literally the same artwork.
 
+The SVG names plain CSS font stacks and lets whoever opens it resolve them, but a rasteriser has to find real files — and a serverless container usually ships none at all. resvg draws nothing rather than substituting, so on such a host a titled PNG comes back as artwork with the type silently missing. Point it at real faces and the same URL renders everywhere:
+
+```typescript
+const png = await renderPng({
+	seed: 'album-42',
+	title: 'Process of Elimination',
+	fonts: {
+		fontDirs: ['./fonts'],
+		fontFiles: ['./brand/Whatever-Bold.ttf'],
+		loadSystemFonts: true, // the default; `false` uses only what you named
+		defaultFontFamily: 'Inter', // when a stack matches nothing loaded
+	},
+});
+```
+
+`createHandler({ fonts })` takes the same object and passes it to every PNG it renders. The stacks in `FONTS` each name an open-licensed face — Inter, JetBrains Mono, EB Garamond, Playfair Display, Nunito, Roboto Slab, Jost, Cabin — so a directory holding those eight covers all eight pairings. This repo keeps them in `fonts/`; they are not part of the published package.
+
 ### HTTP endpoint
 
 ```bash
@@ -177,7 +209,15 @@ open http://localhost:3000/
 
 It is deliberately boring under the hood: every preview is an `<img>` on the same immutable-cached URL the API serves, so revisiting a knob position is a browser cache hit. Knob changes are coalesced to one update per ~16ms, the main preview is decoded off-thread and swapped in only once ready, and contact sheets fill lazily, reuse their tiles, and always request small SVGs — a 48-tile sheet costs less than one full-size PNG.
 
-Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize })`, which returns a single HTML string with no build step. Its own type — Inter Tight for text, Space Grotesk for the wordmark and headings, JetBrains Mono for values and code — comes from Google Fonts with `display=swap`, so the page is readable on system stacks before the fonts land and stays readable if they never do. That link is the page's only external asset; `webfonts: false` drops it, on `playgroundHtml` or on `createHandler`, leaving a page that loads nothing off-site. `createHandler({ playground: false })` turns the page off entirely.
+Serve the page from your own routes with `playgroundHtml({ basePath, palettes, maxSize, siteUrl })`, which returns a single HTML string with no build step. Its own type — Inter Tight for text, Baloo 2 for the wordmark and headings, IBM Plex Mono for values and code — comes from Google Fonts with `display=swap`, so the page is readable on system stacks before the fonts land and stays readable if they never do. That link is the page's only external asset; `webfonts: false` drops it, on `playgroundHtml` or on `createHandler`, leaving a page that loads nothing off-site. `createHandler({ playground: false })` turns the page off entirely.
+
+#### Sharing the page
+
+The page carries a title, a description, a canonical link, Open Graph and Twitter card tags, JSON-LD, an icon, and a theme colour for both schemes, so a pasted link previews properly on X, LinkedIn, Slack, iMessage and the rest.
+
+Those tags need an absolute origin, because a crawler will not resolve a relative image. `createHandler` takes it from the request, so a mounted handler is correct without configuration; pass `siteUrl: 'https://example.com'` when the public address is not the one the request arrives on — behind a proxy, say. Without a known origin the social tags are left out rather than emitted broken.
+
+The card itself is a static `og.png`, not a render: X and LinkedIn reject an SVG, and a crawler should not be waiting on a rasteriser. `bun run og` rebuilds it, along with the favicon and the touch icon, into `public/`.
 
 #### Deploying to Vercel
 
@@ -189,6 +229,10 @@ vercel --prod
 ```
 
 PNG needs the native rasteriser in the function bundle, which is why `api/index.ts` imports `@resvg/resvg-js` by name — `png.ts` loads it through an indirect specifier, and a file tracer cannot see through that.
+
+It needs type, too. The runtime image has no fonts installed, so `vercel.json` carries `fonts/` into the bundle with `includeFiles` and `api/index.ts` hands the directory to `createHandler({ fonts })`. Without that every titled PNG comes back with its type missing while the SVG keeps it.
+
+The rewrite is a fallback, not a catch-all: Vercel checks the filesystem first, so `public/` still wins for `og.png`, `favicon.svg`, `apple-touch-icon.png` and `robots.txt`.
 
 Because output depends only on the URL and the configured palettes, responses carry a strong `ETag` and answer `304` to a matching `If-None-Match`, alongside a one-year immutable `Cache-Control`. `HEAD` is supported; anything other than `GET`/`HEAD` gets a `405`.
 
@@ -202,7 +246,8 @@ import { MOTIFS, PALETTES, design } from 'polkadot';
 MOTIFS;
 // rings, sun, split, grid, waves, arch, bands, orbit, prism,
 // halftone, horizon, lattice, bloom, stack, beam, pebbles,
-// chevron, eclipse
+// chevron, eclipse, checker, quarters, moon, ripple, confetti,
+// mesa, pillars, nodes, spokes, tiles
 
 PALETTES.map((p) => p.name);
 // vermilion, forest, midnight, rust, plum, tide,
@@ -211,6 +256,12 @@ PALETTES.map((p) => p.name);
 // Inspect the choice without rendering
 design('album-42');
 // { palette, motif, variant, rotation, isDarkField }
+```
+
+Narrow the set instead of forcing one value, and the seed still does the choosing:
+
+```typescript
+renderSvg({ seed: 'album-42', motifs: ['rings', 'orbit', 'eclipse'] });
 ```
 
 Bring your own colours — palettes are inputs, not constants:
@@ -245,7 +296,7 @@ FONTS.mono; // { title, subtitle, advance } — plain CSS font stacks
 
 Eight pairings: an old-style book serif (`serif`), a neutral grotesque (`sans`), a code face (`mono`), a high-contrast didone (`display`), a soft geometric (`rounded`), an editorial slab (`slab`), a wide poster geometric (`grotesk`, the default), and a calligraphic humanist sans (`humanist`).
 
-Every stack is built from fonts that ship with common desktops: an SVG is rendered by whoever opens it, and the PNG rasteriser only sees installed system fonts, so there is no web font to load. Each one ends with the Liberation/DejaVu names a Linux server actually has and then a generic family, so a missing face degrades to the right _shape_ rather than to the renderer's single default. `advance` is the face's average glyph width in ems — a string renderer cannot measure text, so line breaking counts with that instead of one shared guess, and a mono or geometric title wraps before it runs past the edge. Pass `titleFont` / `subtitleFont` to override a stack outright.
+Every stack starts with fonts that ship with common desktops, because an SVG is rendered by whoever opens it and there is no web font to load. Each then names an open-licensed equivalent — Inter, JetBrains Mono, EB Garamond, Playfair Display, Nunito, Roboto Slab, Jost, Cabin — which is what a server can actually install, and ends with the Liberation/DejaVu names and a generic family, so a missing face degrades to the right _shape_ rather than to the renderer's single default. Point `renderPng({ fonts })` at those eight and a PNG matches the SVG on a host with nothing installed. `advance` is the face's average glyph width in ems — a string renderer cannot measure text, so line breaking counts with that instead of one shared guess, and a mono or geometric title wraps before it runs past the edge. Pass `titleFont` / `subtitleFont` to override a stack outright.
 
 A busy motif can swallow a title — `beam` and `bands` fill most of the canvas with the mark colour. `scrim` fades the field colour up behind the type block to fix that, either as a switch (`scrim: true`, 0.85) or a strength (`scrim: 0.6`).
 
