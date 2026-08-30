@@ -720,6 +720,9 @@ const dirty = { gallery: true, motifs: true, palettes: true, variants: true, doc
    timer rather than requestAnimationFrame: rAF is throttled to a stop in a
    background tab, which would leave the preview stale behind the knobs. */
 function schedule() {
+	// Anything that asks for a redraw is a knob being turned, so the state is
+	// the reader's from here on and worth writing to the hash.
+	owned = true;
 	if (pending) return;
 	pending = setTimeout(function () { pending = 0; apply(); }, 16);
 }
@@ -1078,7 +1081,12 @@ function download() {
 /* ---------- Hash state ---------- */
 
 let hashTimer = 0;
+/* False until the reader touches something. The page opens on a random seed,
+   and writing that seed to the hash would pin every later reload to the same
+   picture — the one thing a fresh visit must not do. */
+let owned = false;
 function saveHash() {
+	if (!owned) return;
 	clearTimeout(hashTimer);
 	hashTimer = setTimeout(function () {
 		const params = new URLSearchParams();
@@ -1109,6 +1117,7 @@ function loadHash() {
 		else state[key] = raw;
 	}
 	if (found) ratio = state.w / state.h;
+	return found;
 }
 
 /* ---------- Boot ---------- */
@@ -1170,7 +1179,7 @@ $('h').addEventListener('input', function () {
 	if (state.lock) setSize(value * ratio, value);
 	else { setSize(state.w, value); ratio = state.w / state.h; }
 });
-$('lock').addEventListener('change', function () { state.lock = $('lock').checked; ratio = state.w / state.h; saveHash(); });
+$('lock').addEventListener('change', function () { state.lock = $('lock').checked; ratio = state.w / state.h; owned = true; saveHash(); });
 $('swap').addEventListener('click', function () { setSize(state.h, state.w); ratio = state.w / state.h; });
 $('scale').addEventListener('input', function () { state.scale = Number($('scale').value); schedule(); });
 $('scrim').addEventListener('input', function () { state.scrim = Number($('scrim').value); markDirty(); schedule(); });
@@ -1222,7 +1231,8 @@ function paletteType() {
 }
 
 function pick(values) { return values[Math.floor(Math.random() * values.length)]; }
-function randomSeed() { state.seed = Math.random().toString(36).slice(2, 10); markDirty(); schedule(); }
+function newSeed() { return Math.random().toString(36).slice(2, 10); }
+function randomSeed() { state.seed = newSeed(); markDirty(); schedule(); }
 
 $('dice').addEventListener('click', randomSeed);
 $('shuffle').addEventListener('click', function () { gallerySalt++; dirty.gallery = true; refreshSheet('gallery'); });
@@ -1230,16 +1240,18 @@ $('galleryLock').addEventListener('change', function () {
 	state.galleryLock = $('galleryLock').checked;
 	dirty.gallery = true;
 	refreshSheet('gallery');
+	owned = true;
 	saveHash();
 });
 $('galleryCount').addEventListener('change', function () {
 	state.count = Number($('galleryCount').value);
 	dirty.gallery = true;
 	refreshSheet('gallery');
+	owned = true;
 	saveHash();
 });
 function surprise() {
-	state.seed = Math.random().toString(36).slice(2, 10);
+	state.seed = newSeed();
 	state.motif = pick([''].concat(CONFIG.motifs));
 	state.palette = pick([''].concat(CONFIG.palettes.map(function (palette) { return palette.name; })));
 	state.variant = pick(['', 0, 1, 2, 3]);
@@ -1328,7 +1340,10 @@ addEventListener('hashchange', function () {
 	schedule();
 });
 
-loadHash();
+/* A link with state in it has to reproduce exactly; a bare visit does not, so
+   it opens on a seed and a contact sheet nobody has seen before. */
+if (!loadHash()) state.seed = newSeed();
+gallerySalt = 1 + Math.floor(Math.random() * 9973);
 fillDocs();
 apply();
 `;

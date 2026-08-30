@@ -598,6 +598,15 @@ describe('playgroundHtml', () => {
 		expect(html).toContain('name="theme-color" content="#201a14"');
 	});
 
+	test('opens on a fresh seed, unless the link carries state', () => {
+		// A reload of the bare page must not serve the same picture twice, and
+		// the seed it lands on must stay out of the hash, or the reload after
+		// that would be pinned to it.
+		expect(html).toContain('if (!loadHash()) state.seed = newSeed();');
+		expect(html).toContain('gallerySalt = 1 + Math.floor(Math.random() * 9973);');
+		expect(html).toMatch(/function saveHash\(\) \{\s*if \(!owned\) return;/);
+	});
+
 	test('stays ASCII, because the bundler escapes raw templates', () => {
 		// A non-ASCII glyph inside `String.raw` survives transpilation as a
 		// literal `\uXXXX`, which would then print as text in the page.
