@@ -141,6 +141,19 @@ header .tag {
 header .tag.keys em { font-style: normal; margin-right: 4px; opacity: 0.7; }
 header .grow { flex: 1; }
 header .actions { display: flex; align-items: center; gap: 6px; }
+/* The two outbound links wear the same shell as the icon buttons beside them,
+   so the row reads as one set of controls rather than links glued to buttons. */
+header .actions a.icon {
+	display: grid; place-items: center; padding: 8px 10px;
+	border: 2px solid var(--ink); border-radius: 10px;
+	background: var(--sunk); color: var(--ink); box-shadow: var(--shadow-sm);
+	transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+header .actions a.icon svg { display: block; width: 15px; height: 15px; fill: currentColor; }
+@media (hover: hover) { header .actions a.icon:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); } }
+header .actions a.icon:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+header .actions a.icon:focus-visible { outline: 3px solid var(--grape); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { header .actions a.icon { transition: none; } }
 @media (max-width: 980px) { header .tag.keys { display: none; } }
 @media (max-width: 560px) { header .tag { display: none; } }
 .wrap {
@@ -441,6 +454,7 @@ dialog dd { margin: 0; color: var(--muted); }
 	select { padding-right: 30px; }
 	button { min-height: 40px; padding: 10px 14px; }
 	button.icon { min-width: 42px; }
+	header .actions a.icon { min-width: 42px; min-height: 40px; }
 	.seg button { min-height: 40px; padding: 10px 6px; }
 	.chips button { min-height: 38px; }
 	input[type=range] { height: 34px; }
@@ -468,6 +482,12 @@ const BODY = String.raw`
 	<span class="tag keys"><kbd>R</kbd><em>seed</em><kbd>M</kbd><em>motif</em><kbd>P</kbd><em>palette</em><kbd>?</kbd><em>all</em></span>
 	<span class="actions">
 		<button type="button" id="surprise" class="primary">Surprise me</button>
+		<a class="icon" href="https://github.com/TimMikeladze/polkadot" target="_blank" rel="noopener noreferrer" title="Source on GitHub" aria-label="Source on GitHub">
+			<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.19c0 .21.15.46.55.38A8 8 0 0 0 8 0Z"/></svg>
+		</a>
+		<a class="icon" href="https://x.com/linesofcode" target="_blank" rel="noopener noreferrer" title="@linesofcode on X" aria-label="@linesofcode on X">
+			<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M12.6 0h2.45l-5.36 6.13L16 16h-4.94l-3.87-5.06L2.77 16H.32l5.73-6.55L0 0h5.06l3.5 4.63L12.6 0Zm-.86 14.54h1.36L4.32 1.38H2.87l8.87 13.16Z"/></svg>
+		</a>
 		<button type="button" id="keys" class="icon" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
 		<button type="button" id="theme" class="icon" title="Toggle theme" aria-label="Toggle theme">&#9680;</button>
 	</span>
