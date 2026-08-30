@@ -515,6 +515,18 @@ describe('playgroundHtml', () => {
 		expect(offline).toContain('Inter Tight');
 	});
 
+	test('is usable with a thumb: no double-tap zoom, no focus zoom', () => {
+		expect(html).toContain('viewport-fit=cover');
+		// `manipulation` drops the double-tap-to-zoom gesture while leaving
+		// pinch-to-zoom in place.
+		expect(html).toContain('touch-action: manipulation');
+		// Below 16px iOS Safari zooms the page when a field takes focus.
+		expect(html).toContain('@media (pointer: coarse)');
+		expect(html).toMatch(/input\[type=text\], select \{ font-size: 16px/);
+		// A tap must not leave a control stuck in its hover state.
+		expect(html).toContain('@media (hover: hover)');
+	});
+
 	test('stays ASCII, because the bundler escapes raw templates', () => {
 		// A non-ASCII glyph inside `String.raw` survives transpilation as a
 		// literal `\uXXXX`, which would then print as text in the page.

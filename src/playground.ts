@@ -89,6 +89,12 @@ const STYLE = String.raw`
 }
 * { box-sizing: border-box; }
 html { scrollbar-gutter: stable; }
+/* Touch: a tap acts at once and never doubles as a zoom gesture, so the
+   double-tap-to-zoom delay and the accidental zoom on a fast second tap both
+   go. Pinch-to-zoom and scrolling are untouched, so nothing about
+   reading the page gets taken away. */
+html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+button, label, select, summary, a, input, .tile { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 body {
 	margin: 0;
 	background: var(--bg);
@@ -105,7 +111,9 @@ body {
 }
 header {
 	display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-	padding: 10px 20px; border-bottom: 2px solid var(--ink);
+	padding: 10px max(20px, env(safe-area-inset-right)) 10px max(20px, env(safe-area-inset-left));
+	padding-top: max(10px, env(safe-area-inset-top));
+	border-bottom: 2px solid var(--ink);
 	background: color-mix(in srgb, var(--panel) 92%, transparent);
 	backdrop-filter: saturate(180%) blur(12px);
 	position: sticky; top: 0; z-index: 5;
@@ -129,7 +137,11 @@ header .grow { flex: 1; }
 header .actions { display: flex; align-items: center; gap: 6px; }
 @media (max-width: 980px) { header .tag.keys { display: none; } }
 @media (max-width: 560px) { header .tag { display: none; } }
-.wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr) 280px; gap: 20px; padding: 20px; align-items: start; max-width: 1680px; margin: 0 auto; }
+.wrap {
+	display: grid; grid-template-columns: 300px minmax(0, 1fr) 280px; gap: 20px;
+	padding: 20px max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+	align-items: start; max-width: 1680px; margin: 0 auto;
+}
 /* Knobs, stage, output. Below 1240px the output rail drops under the stage;
    below 900px everything stacks. */
 @media (max-width: 1240px) { .wrap { grid-template-columns: 300px minmax(0, 1fr); } .rail { grid-column: 2; } }
@@ -143,7 +155,7 @@ header .actions { display: flex; align-items: center; gap: 6px; }
 }
 
 .panel { background: var(--panel); border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow); }
-#knobs { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow-y: auto; padding: 0 0 8px; overscroll-behavior: contain; }
+#knobs { position: sticky; top: 70px; max-height: calc(100vh - 90px); max-height: calc(100dvh - 90px); overflow-y: auto; padding: 0 0 8px; overscroll-behavior: contain; }
 @media (max-width: 900px) { #knobs { position: static; max-height: none; } }
 fieldset { border: 0; margin: 0; padding: 4px 16px 18px; }
 fieldset + fieldset { border-top: 1.5px solid var(--line); }
@@ -189,7 +201,7 @@ input[type=text], select {
 	width: 100%; padding: 8px 10px; border: 1.5px solid var(--line-strong); border-radius: 10px;
 	background: var(--sunk); color: var(--ink); font: inherit;
 }
-input[type=text]:hover, select:hover { border-color: var(--ink); }
+@media (hover: hover) { input[type=text]:hover, select:hover { border-color: var(--ink); } }
 select {
 	appearance: none; padding-right: 28px; cursor: pointer;
 	background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
@@ -217,8 +229,10 @@ input[type=range]::-moz-range-thumb {
 	width: 16px; height: 16px; border-radius: 50%;
 	background: var(--ink); border: 2.5px solid var(--panel); box-shadow: 0 0 0 1.5px var(--ink);
 }
-input[type=range]:hover::-webkit-slider-thumb { background: var(--brand); box-shadow: 0 0 0 1.5px var(--brand); }
-input[type=range]:hover::-moz-range-thumb { background: var(--brand); box-shadow: 0 0 0 1.5px var(--brand); }
+@media (hover: hover) {
+	input[type=range]:hover::-webkit-slider-thumb { background: var(--brand); box-shadow: 0 0 0 1.5px var(--brand); }
+	input[type=range]:hover::-moz-range-thumb { background: var(--brand); box-shadow: 0 0 0 1.5px var(--brand); }
+}
 input[type=range]:disabled { opacity: 0.4; cursor: not-allowed; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
 .seed-row { display: flex; gap: 6px; }
@@ -231,7 +245,7 @@ button {
 	white-space: nowrap; box-shadow: var(--shadow-sm);
 	transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
-button:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+@media (hover: hover) { button:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); } }
 button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
 button.primary { background: var(--brand); color: var(--on-accent); border-color: var(--ink); }
 button.icon { padding: 8px 10px; }
@@ -241,13 +255,13 @@ button.icon { padding: 8px 10px; }
 	flex: 1; border: 0; border-radius: 0; background: transparent; padding: 7px 4px; box-shadow: none;
 	font-size: 12px; color: var(--muted);
 }
-.seg button:hover { color: var(--ink); transform: none; box-shadow: none; }
+@media (hover: hover) { .seg button:hover { color: var(--ink); transform: none; box-shadow: none; } }
 .seg button:active { transform: none; box-shadow: none; }
 .seg button + button { border-left: 1.5px solid var(--line-strong); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-accent); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chips button { font-size: 11.5px; padding: 6px 10px; box-shadow: 2px 2px 0 var(--ink); }
-.chips button:hover { box-shadow: 3px 3px 0 var(--ink); }
+@media (hover: hover) { .chips button:hover { box-shadow: 3px 3px 0 var(--ink); } }
 .check { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .color-row { display: flex; gap: 6px; }
 input[type=color] {
@@ -284,7 +298,7 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 .frame[data-backdrop="light"] { background: #ffffff; }
 .frame[data-backdrop="dark"] { background: #0b0b0d; }
 #preview {
-	width: auto; height: auto; max-width: 100%; max-height: 66vh; object-fit: contain;
+	width: auto; height: auto; max-width: 100%; max-height: 66vh; max-height: 66dvh; object-fit: contain;
 	border-radius: 8px; display: block;
 }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 12px; margin-top: 14px; font-variant-numeric: tabular-nums; }
@@ -300,8 +314,11 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+/* A phone column is ~310px wide, which misses two 150px tiles by a hair and
+   drops the gallery to one tile per screen. Shrink the floor so it stays two. */
+@media (max-width: 560px) { .grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; } }
 .tile { display: flex; flex-direction: column; gap: 6px; padding: 0; border: 1.5px solid var(--line-strong); background: var(--sunk); border-radius: 12px; overflow: hidden; cursor: pointer; text-align: left; }
-.tile:hover { border-color: var(--ink); }
+@media (hover: hover) { .tile:hover { border-color: var(--ink); } }
 .tile[aria-pressed="true"] { border-color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
 .tile img { width: 100%; display: block; aspect-ratio: var(--tile-ratio, 1); object-fit: cover; background: var(--sunk); }
 .tile span { padding: 0 8px 7px; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -329,7 +346,8 @@ h2.section::after { content: ""; flex: 1; height: 1px; background: var(--line); 
 .out .chips button { flex: 1 1 calc(50% - 3px); }
 @media (max-width: 1240px) { .out .chips button { flex: 0 1 auto; } }
 .toast {
-	position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px);
+	position: fixed; left: 50%; bottom: max(24px, calc(env(safe-area-inset-bottom) + 12px));
+	transform: translateX(-50%) translateY(8px);
 	background: var(--accent); color: var(--on-accent); padding: 8px 14px; border-radius: 999px;
 	border: 2px solid var(--ink); font: 600 12.5px/1.4 var(--ui);
 	opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s;
@@ -387,6 +405,25 @@ dialog::backdrop { background: rgba(20, 16, 12, 0.45); }
 dialog h2 { margin: 0 0 14px; font: 700 16px/1 var(--display); letter-spacing: -0.01em; }
 dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 0; font-size: 13px; align-items: center; }
 dialog dd { margin: 0; color: var(--muted); }
+/* Finger-sized on touch. Two things happen here: every control clears the
+   ~40px tap target, and the text fields reach 16px, below which iOS Safari
+   zooms the page in the moment a field takes focus. */
+@media (pointer: coarse) {
+	input[type=text], select { font-size: 16px; padding: 10px 12px; }
+	select { padding-right: 30px; }
+	button { min-height: 40px; padding: 10px 14px; }
+	button.icon { min-width: 42px; }
+	.seg button { min-height: 40px; padding: 10px 6px; }
+	.chips button { min-height: 38px; }
+	input[type=range] { height: 34px; }
+	input[type=range]::-webkit-slider-thumb { width: 22px; height: 22px; margin-top: -9px; }
+	input[type=range]::-moz-range-thumb { width: 22px; height: 22px; }
+	input[type=color] { height: 42px; }
+	.check { font-size: 14px; }
+	.check input { width: 20px; height: 20px; }
+	.knobs-toggle-label { padding: 14px 12px; }
+	.tile span { padding: 0 8px 9px; }
+}
 .skip {
 	position: absolute; left: -9999px; top: 0; background: var(--accent); color: var(--on-accent);
 	padding: 8px 12px; border-radius: 0 0 8px 0; z-index: 10;
@@ -1304,7 +1341,7 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>polkadot playground</title>
 ${fonts}
 <style>${STYLE}</style>
