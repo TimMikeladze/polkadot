@@ -141,15 +141,19 @@ header .tag {
 header .tag.keys em { font-style: normal; margin-right: 4px; opacity: 0.7; }
 header .grow { flex: 1; }
 header .actions { display: flex; align-items: center; gap: 6px; }
-/* The two outbound links wear the same shell as the icon buttons beside them,
-   so the row reads as one set of controls rather than links glued to buttons. */
-header .actions a.icon {
-	display: grid; place-items: center; padding: 8px 10px;
+/* One height for the whole row and a square for every icon, so the outbound
+   links, the glyph buttons and the primary button read as one set of controls
+   rather than as parts collected from different places. Glyphs and SVG marks differ in
+   natural width, so the box is fixed and the mark is centred inside it. */
+header .actions button { height: 38px; }
+header .actions .icon {
+	display: grid; place-items: center; width: 38px; height: 38px; padding: 0;
 	border: 2px solid var(--ink); border-radius: 10px;
 	background: var(--sunk); color: var(--ink); box-shadow: var(--shadow-sm);
+	font: 600 14px/1 var(--ui);
 	transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
-header .actions a.icon svg { display: block; width: 15px; height: 15px; fill: currentColor; }
+header .actions .icon svg { display: block; width: 15px; height: 15px; fill: currentColor; }
 @media (hover: hover) { header .actions a.icon:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); } }
 header .actions a.icon:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
 header .actions a.icon:focus-visible { outline: 3px solid var(--grape); outline-offset: 2px; }
@@ -454,7 +458,8 @@ dialog dd { margin: 0; color: var(--muted); }
 	select { padding-right: 30px; }
 	button { min-height: 40px; padding: 10px 14px; }
 	button.icon { min-width: 42px; }
-	header .actions a.icon { min-width: 42px; min-height: 40px; }
+	header .actions button { height: 42px; }
+	header .actions .icon { width: 42px; height: 42px; }
 	.seg button { min-height: 40px; padding: 10px 6px; }
 	.chips button { min-height: 38px; }
 	input[type=range] { height: 34px; }
