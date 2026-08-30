@@ -79,8 +79,8 @@ function card(): string {
 		`<rect width="${width}" height="${height}" fill="${BG}"/>` +
 		mark(80, 124, 60) +
 		`<text x="78" y="280" font-family="Baloo 2" font-size="104" font-weight="800" fill="${INK}" letter-spacing="-3">polkadot</text>` +
-		`<text x="80" y="344" font-family="Inter Tight" font-size="31" font-weight="400" fill="${MUTED}">Deterministic placeholder</text>` +
-		`<text x="80" y="384" font-family="Inter Tight" font-size="31" font-weight="400" fill="${MUTED}">images from a seed string.</text>` +
+		`<text x="80" y="344" font-family="Inter Tight" font-size="31" font-weight="400" fill="${MUTED}">Placeholder images from a seed.</text>` +
+		`<text x="80" y="384" font-family="Inter Tight" font-size="31" font-weight="400" fill="${MUTED}">Same seed, same picture, forever.</text>` +
 		// The URL chip is the whole pitch: one link is the whole API.
 		`<rect x="88" y="446" width="${chipWidth}" height="60" rx="16" fill="${INK}"/>` +
 		`<rect x="80" y="438" width="${chipWidth}" height="60" rx="16" fill="#fffdf6" stroke="${INK}" stroke-width="2.5"/>` +
