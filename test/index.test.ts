@@ -9,6 +9,7 @@ import {
 	parseImageRequest,
 	playgroundHtml,
 	renderDataUri,
+	renderPng,
 	renderSvg,
 	VARIANTS,
 	wrapText,
@@ -405,9 +406,33 @@ describe('createHandler', () => {
 		);
 		expect(response.headers.get('content-type')).toContain('text/html');
 		const body = await response.text();
-		expect(body).toContain('polkadot playground');
+		expect(body).toContain('<title>polkadot: deterministic');
 		// The knob config carries the mount point the page must build URLs against.
 		expect(body).toContain('"base":""');
+	});
+
+	test('social tags use the request origin, so a shared link previews', async () => {
+		// Crawlers drop a relative image, so the card has to be absolute — and
+		// the only origin a mounted handler knows is the one it was asked on.
+		const response = await handler(
+			new Request('https://polkadot.sh/', { headers: { accept: 'text/html' } }),
+		);
+		const body = await response.text();
+		expect(body).toContain('<meta property="og:image" content="https://polkadot.sh/og.png">');
+		expect(body).toContain('<meta name="twitter:card" content="summary_large_image">');
+		expect(body).toContain('<link rel="canonical" href="https://polkadot.sh/">');
+	});
+
+	test('a configured siteUrl wins over the request origin', async () => {
+		// Behind a proxy the request origin is the internal one, so a deployment
+		// that knows its public address must be able to say so.
+		const pinned = createHandler({ siteUrl: 'https://polkadot.sh' });
+		const response = await pinned(
+			new Request('http://internal.local/', { headers: { accept: 'text/html' } }),
+		);
+		expect(await response.text()).toContain(
+			'<meta property="og:url" content="https://polkadot.sh/">',
+		);
 	});
 
 	test('playground can be disabled, leaving the JSON usage document', async () => {
@@ -542,6 +567,23 @@ describe('playgroundHtml', () => {
 		}
 	});
 
+	test('omits the social tags when it does not know its own origin', () => {
+		// A relative `og:image` is worse than none: the crawler renders a broken
+		// card rather than falling back to the page.
+		expect(html).not.toContain('og:image');
+		expect(html).not.toContain('rel="canonical"');
+		expect(playgroundHtml({ siteUrl: 'https://polkadot.sh/' })).toContain(
+			'<meta property="og:image" content="https://polkadot.sh/og.png">',
+		);
+	});
+
+	test('names an icon and a theme colour for both schemes', () => {
+		expect(html).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml"');
+		expect(html).toContain('rel="apple-touch-icon"');
+		expect(html).toContain('name="theme-color" content="#f2ebda"');
+		expect(html).toContain('name="theme-color" content="#201a14"');
+	});
+
 	test('stays ASCII, because the bundler escapes raw templates', () => {
 		// A non-ASCII glyph inside `String.raw` survives transpilation as a
 		// literal `\uXXXX`, which would then print as text in the page.
@@ -563,5 +605,30 @@ describe('playgroundHtml', () => {
 		});
 		expect(hostile).not.toContain('</script><script>alert(1)');
 		expect(hostile).toContain('\\u003c/script');
+	});
+});
+
+describe('renderPng', () => {
+	// A container with no installed fonts is the normal case on a serverless
+	// host, and resvg draws nothing at all rather than substituting a face — so
+	// every title would silently vanish from the PNG while the SVG kept it.
+	const bare = { loadSystemFonts: false, fontDirs: ['fonts'] };
+
+	test('draws type on a host with no installed fonts, for every pairing', async () => {
+		for (const font of FONT_NAMES) {
+			const base = { seed: 'album-42', width: 400, height: 200, font } as const;
+			const untyped = await renderPng({ ...base, fonts: bare });
+			const typed = await renderPng({ ...base, title: 'Northern Line', fonts: bare });
+			// Identical bytes mean the title rasterised to nothing.
+			expect(typed.byteLength).not.toBe(untyped.byteLength);
+		}
+	});
+
+	test('renders nothing at all when it is given no fonts to use', async () => {
+		const base = { seed: 'album-42', width: 400, height: 200 } as const;
+		const fonts = { loadSystemFonts: false };
+		const untyped = await renderPng({ ...base, fonts });
+		const typed = await renderPng({ ...base, title: 'Northern Line', fonts });
+		expect(typed.byteLength).toBe(untyped.byteLength);
 	});
 });

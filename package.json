@@ -50,6 +50,7 @@
 		"dev": "bunup --watch",
 		"format": "oxfmt",
 		"lint": "oxlint",
+		"og": "bun run scripts/og.ts",
 		"prepare": "bun simple-git-hooks",
 		"serve": "bun run src/cli.ts",
 		"release": "bumpp --commit --push --tag",

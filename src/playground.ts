@@ -15,6 +15,12 @@ export type PlaygroundOptions = {
 	 * all, and falls back to the system stacks behind each family.
 	 */
 	webfonts?: boolean;
+	/**
+	 * Absolute origin the page is served from, e.g. `https://polkadot.sh`.
+	 * Social crawlers reject relative image URLs, so the canonical link and the
+	 * Open Graph tags are only emitted when this is known.
+	 */
+	siteUrl?: string;
 };
 
 /** Canvas sizes worth one click, in the order a designer reaches for them. */
@@ -1341,6 +1347,21 @@ apply();
  * - contact sheets fill lazily, reuse their tiles across updates, and always
  *   ask for small SVGs, so a 48-tile grid costs less than one full-size PNG.
  */
+const PAGE_TITLE = 'polkadot: deterministic placeholder images from a seed';
+const PAGE_DESCRIPTION =
+	'Generative placeholder images from a seed string. Twelve palettes, 28 motifs, SVG or PNG from one URL. Same seed, same picture, every time: no dependencies, no network, no stored assets.';
+const OG_IMAGE_ALT =
+	'Six polkadot placeholder images beside the polkadot wordmark and an example image URL';
+
+/** Escape a value for an HTML attribute or text node. */
+function escapeHtml(value: string): string {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;');
+}
+
 export function playgroundHtml(options: PlaygroundOptions = {}): string {
 	const base = (options.basePath ?? '').replace(/\/+$/, '');
 	// `display=swap`, so the page is readable on the system stacks before the
@@ -1375,13 +1396,55 @@ export function playgroundHtml(options: PlaygroundOptions = {}): string {
 		// must not be able to close it.
 		.replace(/</g, '\\u003c');
 
+	// Crawlers will not resolve a relative image, and Twitter and LinkedIn drop
+	// an SVG outright, so the card points at a static PNG on an absolute origin.
+	// Without a known origin the social tags are left out rather than emitted
+	// broken.
+	const site = (options.siteUrl ?? '').replace(/\/+$/, '');
+	const social = site
+		? `<link rel="canonical" href="${site}${base || '/'}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="polkadot">
+<meta property="og:title" content="${escapeHtml(PAGE_TITLE)}">
+<meta property="og:description" content="${escapeHtml(PAGE_DESCRIPTION)}">
+<meta property="og:url" content="${site}${base || '/'}">
+<meta property="og:image" content="${site}${base}/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${escapeHtml(OG_IMAGE_ALT)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeHtml(PAGE_TITLE)}">
+<meta name="twitter:description" content="${escapeHtml(PAGE_DESCRIPTION)}">
+<meta name="twitter:image" content="${site}${base}/og.png">
+<meta name="twitter:image:alt" content="${escapeHtml(OG_IMAGE_ALT)}">
+<script type="application/ld+json">${JSON.stringify({
+				'@context': 'https://schema.org',
+				'@type': 'SoftwareApplication',
+				name: 'polkadot',
+				description: PAGE_DESCRIPTION,
+				url: `${site}${base || '/'}`,
+				image: `${site}${base}/og.png`,
+				applicationCategory: 'DeveloperApplication',
+				operatingSystem: 'Any',
+				offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+			}).replace(/</g, '\\u003c')}</script>
+`
+		: '';
+
 	return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>polkadot playground</title>
-${fonts}
+<title>${escapeHtml(PAGE_TITLE)}</title>
+<meta name="description" content="${escapeHtml(PAGE_DESCRIPTION)}">
+<link rel="icon" href="${base}/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="${base}/apple-touch-icon.png">
+<meta name="theme-color" content="#f2ebda" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#201a14" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+${social}${fonts}
 <style>${STYLE}</style>
 </head>
 <body>

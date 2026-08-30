@@ -32,13 +32,13 @@ const MONO =
 
 /** Humanist sans, for the pairings that want warmth rather than neutrality. */
 const HUMANIST =
-	"Optima, 'Gill Sans', 'Gill Sans MT', Candara, 'Trebuchet MS', 'Segoe UI', ui-sans-serif, sans-serif";
+	"Optima, 'Gill Sans', 'Gill Sans MT', Candara, Cabin, 'Trebuchet MS', 'Segoe UI', ui-sans-serif, sans-serif";
 
 export const FONTS: Record<string, FontPair> = {
 	// Old-style book serif: generous, and the one pairing that reads as a book.
 	serif: {
 		title:
-			"'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', 'Hoefler Text', Georgia, 'Liberation Serif', ui-serif, serif",
+			"'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', 'Hoefler Text', Georgia, 'EB Garamond', 'Liberation Serif', ui-serif, serif",
 		subtitle: SANS,
 		advance: 0.5,
 	},
@@ -72,7 +72,7 @@ export const FONTS: Record<string, FontPair> = {
 	// modern without being neutral.
 	grotesk: {
 		title:
-			"Futura, 'Century Gothic', 'Avenir Next', Avenir, 'Segoe UI', 'Liberation Sans', ui-sans-serif, sans-serif",
+			"Futura, 'Century Gothic', 'Avenir Next', Avenir, Jost, 'Segoe UI', 'Liberation Sans', ui-sans-serif, sans-serif",
 		subtitle: SANS,
 		advance: 0.58,
 	},

@@ -20,5 +20,5 @@ export {
 export { renderMotif, safeColor, VIEWBOX } from './motifs.ts';
 export { PALETTES, type Palette } from './palettes.ts';
 export { playgroundHtml, type PlaygroundOptions } from './playground.ts';
-export { renderPng, type PngOptions } from './png.ts';
+export { renderPng, type PngFontOptions, type PngOptions } from './png.ts';
 export { escapeXml, renderDataUri, renderSvg, wrapText, type SvgOptions } from './svg.ts';

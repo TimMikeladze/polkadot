@@ -2,7 +2,7 @@ import { hashSeed, MOTIFS, type Motif } from './design.ts';
 import { FONT_NAMES } from './fonts.ts';
 import { PALETTES, type Palette } from './palettes.ts';
 import { playgroundHtml } from './playground.ts';
-import { renderPng } from './png.ts';
+import { renderPng, type PngFontOptions } from './png.ts';
 import { renderSvg, type SvgOptions } from './svg.ts';
 
 export type HandlerOptions = {
@@ -21,6 +21,14 @@ export type HandlerOptions = {
 	 * `false` keeps the page free of every external asset.
 	 */
 	webfonts?: boolean;
+	/**
+	 * Where the PNG rasteriser looks for type. A host with no installed fonts
+	 * draws no text at all, so a deployment that wants titles on its PNGs has to
+	 * point this at real font files.
+	 */
+	fonts?: PngFontOptions;
+	/** Absolute origin used for the playground's canonical and social tags. */
+	siteUrl?: string;
 };
 
 const DEFAULT_MAX_SIZE = 2048;
@@ -160,7 +168,10 @@ export function createHandler(
 	const cacheControl = options.cacheControl ?? DEFAULT_CACHE_CONTROL;
 
 	const basePath = (options.basePath ?? '').replace(/\/+$/, '');
-	let html: string | undefined;
+	// The page's canonical and social tags need the absolute origin, which is
+	// only known per request unless the caller configured one. Keyed by origin
+	// and capped, so a spoofed `Host` cannot grow the cache without bound.
+	const pages = new Map<string, string>();
 
 	// Palettes are part of the output, so they belong in the cache key. Without
 	// this, changing a brand colour would serve 304 to every client still
@@ -214,9 +225,14 @@ export function createHandler(
 			// a client library — still gets the machine-readable usage document.
 			const wantsHtml = (request.headers.get('accept') ?? '').includes('text/html');
 			if (options.playground !== false && wantsHtml) {
-				// The page is static for a given config, so build it once per handler.
-				html ??= playgroundHtml(options);
-				return new Response(request.method === 'HEAD' ? null : html, {
+				// The page is static for a given config and origin, so build it once.
+				const siteUrl = options.siteUrl ?? url.origin;
+				let page = pages.get(siteUrl);
+				if (page === undefined) {
+					page = playgroundHtml({ ...options, siteUrl });
+					if (pages.size < 8) pages.set(siteUrl, page);
+				}
+				return new Response(request.method === 'HEAD' ? null : page, {
 					headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
 				});
 			}
@@ -251,7 +267,7 @@ export function createHandler(
 
 		if (parsed.format === 'png') {
 			try {
-				const png = await renderPng(parsed.options);
+				const png = await renderPng({ ...parsed.options, fonts: options.fonts });
 				return respond(request, png, 'image/png', etag);
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'PNG rendering failed';

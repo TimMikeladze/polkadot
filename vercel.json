@@ -9,5 +9,10 @@
 			"destination": "/api"
 		}
 	],
-	"outputDirectory": "public"
+	"outputDirectory": "public",
+	"functions": {
+		"api/index.ts": {
+			"includeFiles": "fonts/**"
+		}
+	}
 }

@@ -14,7 +14,7 @@ export type SvgOptions = DesignOptions & {
 	subtitle?: string;
 	/** Accessible label. Defaults to title/subtitle, then the seed. */
 	label?: string;
-	/** Named type pairing from `FONTS`. Unknown names fall back to `serif`. */
+	/** Named type pairing from `FONTS`. Unknown names fall back to `grotesk`. */
 	font?: string;
 	/** Font stacks for the two type lines. Win over `font` when given. */
 	titleFont?: string;
