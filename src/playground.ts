@@ -160,6 +160,38 @@ header .actions a.icon:focus-visible { outline: 3px solid var(--grape); outline-
 @media (prefers-reduced-motion: reduce) { header .actions a.icon { transition: none; } }
 @media (max-width: 980px) { header .tag.keys { display: none; } }
 @media (max-width: 560px) { header .tag { display: none; } }
+/* One row on a phone. The bar stops wrapping and every part steps down a size
+   instead, so the mark, the wordmark and the whole control set stay on the
+   single strip a phone has room for. The spacer between them is the only thing
+   that gives ground; the controls keep their square shape. */
+@media (max-width: 560px) {
+	header {
+		flex-wrap: nowrap; gap: 8px;
+		padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+		padding-top: max(8px, env(safe-area-inset-top));
+	}
+	header .brand { gap: 7px; margin-right: 0; min-width: 0; }
+	header .logo-badge { width: 30px; height: 30px; padding: 4px; border-radius: 9px; }
+	header h1 { font-size: 17px; white-space: nowrap; }
+	header .grow { flex: 1 1 0; min-width: 0; }
+	header .actions { flex: none; gap: 5px; }
+	header .actions button.primary { height: 34px; min-height: 34px; padding: 0 11px; font-size: 12.5px; white-space: nowrap; }
+	header .actions .icon { width: 34px; min-width: 34px; height: 34px; min-height: 34px; border-radius: 9px; }
+	header .actions .icon svg { width: 14px; height: 14px; }
+}
+@media (max-width: 400px) {
+	header { gap: 6px; }
+	header .brand { gap: 6px; }
+	header .logo-badge { width: 27px; height: 27px; padding: 3.5px; }
+	header h1 { font-size: 15.5px; }
+	header .actions { gap: 4px; }
+	header .actions button.primary { height: 32px; min-height: 32px; padding: 0 9px; font-size: 12px; }
+	header .actions .icon { width: 32px; min-width: 32px; height: 32px; min-height: 32px; }
+	header .actions .icon svg { width: 13px; height: 13px; }
+}
+/* On the narrowest phones the wordmark is the one part with a stand-in: the
+   badge already says which site this is, so it goes rather than the row. */
+@media (max-width: 359px) { header h1 { display: none; } }
 .wrap {
 	display: grid; grid-template-columns: 300px minmax(0, 1fr) 280px; gap: 20px;
 	padding: 20px max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
@@ -458,8 +490,6 @@ dialog dd { margin: 0; color: var(--muted); }
 	select { padding-right: 30px; }
 	button { min-height: 40px; padding: 10px 14px; }
 	button.icon { min-width: 42px; }
-	header .actions button { height: 42px; }
-	header .actions .icon { width: 42px; height: 42px; }
 	.seg button { min-height: 40px; padding: 10px 6px; }
 	.chips button { min-height: 38px; }
 	input[type=range] { height: 34px; }
@@ -470,6 +500,12 @@ dialog dd { margin: 0; color: var(--muted); }
 	.check input { width: 20px; height: 20px; }
 	.knobs-toggle-label { padding: 14px 12px; }
 	.tile span { padding: 0 8px 9px; }
+}
+/* The toolbar goes finger-sized only where the row has the width to spare;
+   narrower than that the phone rules above keep it to one strip. */
+@media (pointer: coarse) and (min-width: 561px) {
+	header .actions button { height: 42px; }
+	header .actions .icon { width: 42px; height: 42px; }
 }
 .skip {
 	position: absolute; left: -9999px; top: 0; background: var(--accent); color: var(--on-accent);
