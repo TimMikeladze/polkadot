@@ -188,7 +188,7 @@ server.stop();
 | `scale`, `dpr`       | Pixel density for PNG, 1–4                   |
 | `rotate`             | `false` to flatten, or a tilt in degrees     |
 
-`GET /` (or the base path) serves the playground to a browser, and the JSON usage document — including the live motif and palette lists — to everything else. The switch is the `Accept` header, so `curl` still sees JSON. Pass `playground: false` to always serve JSON.
+`GET /` (or the base path) serves the playground, and the JSON usage document — including the live motif and palette lists — to anything that asks for it: `?format=json`, or an `Accept` header naming `application/json`. The page is the default because a social crawler sends `Accept: */*`, and answering one with JSON hands it a body with no meta tags in it. Pass `playground: false` to always serve JSON.
 
 #### Playground
 

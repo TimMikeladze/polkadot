@@ -221,10 +221,15 @@ export function createHandler(
 		const root = url.pathname.replace(/\/+$/, '') || '/';
 
 		if (root === (basePath || '/')) {
-			// A browser asks for HTML and gets the playground; anything else — curl,
-			// a client library — still gets the machine-readable usage document.
-			const wantsHtml = (request.headers.get('accept') ?? '').includes('text/html');
-			if (options.playground !== false && wantsHtml) {
+			// The page is the default, and JSON has to be asked for. Social crawlers
+			// send `Accept: */*` — answering those with the usage document served
+			// them a body with no meta tags in it, so every shared link previewed
+			// as a bare URL. `?format=json` is the switch that needs no header.
+			const accept = request.headers.get('accept') ?? '';
+			const wantsJson =
+				url.searchParams.get('format') === 'json' ||
+				(accept.includes('application/json') && !accept.includes('text/html'));
+			if (options.playground !== false && !wantsJson) {
 				// The page is static for a given config and origin, so build it once.
 				const siteUrl = options.siteUrl ?? url.origin;
 				let page = pages.get(siteUrl);

@@ -381,9 +381,23 @@ describe('createHandler', () => {
 		expect(body).toContain('Hello');
 	});
 
-	test('serves usage at the root', async () => {
-		const response = await handler(new Request('http://x/'));
-		expect(await response.json()).toMatchObject({ motifs: [...MOTIFS] });
+	test('serves usage at the root when a client asks for JSON', async () => {
+		for (const request of [
+			new Request('http://x/?format=json'),
+			new Request('http://x/', { headers: { accept: 'application/json' } }),
+		]) {
+			const response = await handler(request);
+			expect(await response.json()).toMatchObject({ motifs: [...MOTIFS] });
+		}
+	});
+
+	test('a crawler sending no preference gets the page, not the usage document', async () => {
+		// Social crawlers send `Accept: */*`. Answering those with JSON served a
+		// body with no meta tags, so every shared link previewed as a bare URL.
+		for (const headers of [{}, { accept: '*/*' }, { accept: 'text/html,*/*' }]) {
+			const response = await handler(new Request('http://x/', { headers }));
+			expect(response.headers.get('content-type')).toContain('text/html');
+		}
 	});
 
 	test('a HEAD carries the length its GET would', async () => {
@@ -395,7 +409,7 @@ describe('createHandler', () => {
 	});
 
 	test('the usage document lists the fonts it accepts', async () => {
-		const usage = await (await handler(new Request('http://x/'))).json();
+		const usage = await (await handler(new Request('http://x/?format=json'))).json();
 		expect(usage.fonts).toEqual(FONT_NAMES);
 		expect(usage.motifs.length).toBe(MOTIFS.length);
 	});
