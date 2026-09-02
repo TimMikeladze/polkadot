@@ -1,6 +1,6 @@
 {
 	"name": "polkadot.sh",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "Deterministic generative placeholder images — SVG, PNG, and an HTTP endpoint, from a seed string",
 	"keywords": [
 		"avatar",
