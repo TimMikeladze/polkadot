@@ -1,5 +1,5 @@
 {
-	"name": "polkadot",
+	"name": "polkadot.sh",
 	"version": "0.1.0",
 	"description": "Deterministic generative placeholder images — SVG, PNG, and an HTTP endpoint, from a seed string",
 	"keywords": [
@@ -17,12 +17,14 @@
 		"url": "https://github.com/TimMikeladze/polkadot/issues"
 	},
 	"license": "MIT",
+	"author": "Tim Mikeladze <tim.mikeladze@gmail.com>",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/TimMikeladze/polkadot.git"
 	},
 	"bin": {
-		"polkadot": "./dist/cli.js"
+		"polkadot": "./dist/cli.js",
+		"polkadot.sh": "./dist/cli.js"
 	},
 	"files": [
 		"dist"
@@ -51,6 +53,7 @@
 		"format": "oxfmt",
 		"lint": "oxlint",
 		"og": "bun run scripts/og.ts",
+		"prepack": "bun run build",
 		"prepare": "bun simple-git-hooks",
 		"serve": "bun run src/cli.ts",
 		"release": "bumpp --commit --push --tag",

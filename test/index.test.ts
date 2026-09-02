@@ -671,3 +671,26 @@ describe('renderPng', () => {
 		expect(typed.byteLength).toBe(untyped.byteLength);
 	});
 });
+
+/**
+ * The README is the install page. Its snippets import the published name, so a
+ * rename that misses one ships a copy-paste that cannot resolve.
+ */
+describe('README', () => {
+	const pkg = require('../package.json');
+
+	test('imports the published package name', async () => {
+		const readme = await Bun.file('README.md').text();
+		const imports = [...readme.matchAll(/from '([^']+)'/g)].map((match) => match[1]);
+		expect(imports.length).toBeGreaterThan(0);
+		for (const specifier of imports) {
+			expect([pkg.name, `${pkg.name}/server`]).toContain(specifier);
+		}
+		expect(readme).toContain(`bun add ${pkg.name}\n`);
+		expect(readme).toContain(`bunx ${pkg.name} --port`);
+	});
+
+	test('names a binary the package actually installs', () => {
+		expect(Object.keys(pkg.bin)).toContain(pkg.name);
+	});
+});

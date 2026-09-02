@@ -1013,7 +1013,7 @@ function fillDocs() {
 		docsSection('In a page',
 			'<pre>&lt;img src="' + origin + '/album-42.svg?w=1200&amp;h=630&amp;title=Hello" width="1200" height="630" alt="Hello"&gt;</pre>') +
 		docsSection('As a library',
-			'<pre>import { renderSvg } from \'polkadot\';\n\nconst svg = renderSvg({ seed: \'album-42\', width: 600, title: \'Hello\' });</pre>') +
+			'<pre>import { renderSvg } from \'polkadot.sh\';\n\nconst svg = renderSvg({ seed: \'album-42\', width: 600, title: \'Hello\' });</pre>') +
 		docsSection('Machine-readable',
 			'<p>The same root answers JSON to anything that does not ask for HTML.</p>' +
 			'<pre>curl -H \'accept: application/json\' ' + (origin || location.origin) + '/</pre>');

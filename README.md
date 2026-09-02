@@ -1,4 +1,4 @@
-# polkadot
+# polkadot.sh
 
 Deterministic generative placeholder images from a seed string. Zero dependencies, no network, no stored assets — the same seed always produces the same image, on every device and in every runtime.
 
@@ -31,7 +31,7 @@ Use it inline as a library, or link out to a URL and let the endpoint render it.
 ## Installation
 
 ```bash
-bun add polkadot
+bun add polkadot.sh
 # optional, only for PNG output
 bun add @resvg/resvg-js
 ```
@@ -41,7 +41,7 @@ bun add @resvg/resvg-js
 ### SVG
 
 ```typescript
-import { renderSvg, renderDataUri } from 'polkadot';
+import { renderSvg, renderDataUri } from 'polkadot.sh';
 
 const svg = renderSvg({ seed: 'album-42', width: 600 });
 
@@ -98,7 +98,7 @@ In React:
 ### PNG
 
 ```typescript
-import { renderPng } from 'polkadot';
+import { renderPng } from 'polkadot.sh';
 
 const png = await renderPng({
 	seed: 'album-42',
@@ -131,8 +131,10 @@ const png = await renderPng({
 ### HTTP endpoint
 
 ```bash
-bunx polkadot --port 3000
+bunx polkadot.sh --port 3000
 ```
+
+Installing the package puts the same server on `PATH` as `polkadot` (and as `polkadot.sh`). Flags: `--port`, `--host`, `--base-path`, `--max-size`.
 
 ```
 http://localhost:3000/album-42.svg?size=600&title=Lahai&subtitle=Sampha
@@ -142,7 +144,7 @@ http://localhost:3000/album-42.png?w=1200&h=630&scale=2
 Mount it inside an existing app:
 
 ```typescript
-import { createHandler } from 'polkadot';
+import { createHandler } from 'polkadot.sh';
 
 const handler = createHandler({ basePath: '/img', maxSize: 2048 });
 
@@ -156,7 +158,7 @@ export const GET = handler;
 Or programmatically with Bun:
 
 ```typescript
-import { serve } from 'polkadot/server';
+import { serve } from 'polkadot.sh/server';
 
 const server = serve({ port: 3000, basePath: '/img' });
 console.log(server.url);
@@ -195,7 +197,7 @@ server.stop();
 Open the server root in a browser and the same endpoint serves a knob-driven page instead of JSON:
 
 ```bash
-bunx polkadot --port 3000
+bunx polkadot.sh --port 3000
 open http://localhost:3000/
 ```
 
@@ -258,7 +260,7 @@ Sizes are clamped to `maxSize` (default 2048) and unknown motifs are ignored, so
 ### Motifs and palettes
 
 ```typescript
-import { MOTIFS, PALETTES, design } from 'polkadot';
+import { MOTIFS, PALETTES, design } from 'polkadot.sh';
 
 MOTIFS;
 // rings, sun, split, grid, waves, arch, bands, orbit, prism,
@@ -305,7 +307,7 @@ Colours land in SVG attribute values, so quotes and angle brackets are stripped 
 ### Type
 
 ```typescript
-import { FONTS, FONT_NAMES } from 'polkadot';
+import { FONTS, FONT_NAMES } from 'polkadot.sh';
 
 FONT_NAMES; // serif, sans, mono, display, rounded, slab, grotesk, humanist
 FONTS.mono; // { title, subtitle, advance } — plain CSS font stacks
@@ -322,7 +324,7 @@ Placement is a block, not a pair of loose lines: `align` and `valign` set which 
 ### Avatars
 
 ```typescript
-import { initials, seedColors } from 'polkadot';
+import { initials, seedColors } from 'polkadot.sh';
 
 initials('Sampha Sisay'); // "SS"
 seedColors('user-7'); // { background, text }

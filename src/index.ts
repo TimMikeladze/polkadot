@@ -19,10 +19,6 @@ export {
 } from './http.ts';
 export { renderMotif, safeColor, VIEWBOX } from './motifs.ts';
 export { PALETTES, type Palette } from './palettes.ts';
-export {
-	playgroundHtml,
-	type PlaygroundAnalytics,
-	type PlaygroundOptions,
-} from './playground.ts';
+export { playgroundHtml, type PlaygroundAnalytics, type PlaygroundOptions } from './playground.ts';
 export { renderPng, type PngFontOptions, type PngOptions } from './png.ts';
 export { escapeXml, renderDataUri, renderSvg, wrapText, type SvgOptions } from './svg.ts';
